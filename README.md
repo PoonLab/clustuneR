@@ -4,9 +4,10 @@
 The script genSpaceMAUP.R takes in tn93 distance data from a set of population sequences and selects the most optimal cutoff threshold for the purposes of predicting component growth in a network created from this data. This is used to help parameterize molecular clustering techniques for outbreak detection and cluster-forcasting in public health. Our code does this by using data from the earlier time points of the set to establish a log-linked model of cluster growth (discrete network components are defined here as "clusters") and validating that model of growth using data from the latest time point. The measure of performance used here is Generalized AIC (GAIC), which represents the difference in performance between a null and proposed model. In this case, our proposed model is based on recency (ie. Two cases close together in time are more likely to connect to eachother in a network) and is corrected by the overall edge density of cases from a given year. Because modulating the tn93 cutoff distance used to create networks generates a trade-off between case coverage and random error, a selectable optimum GAIC should exist between extremes and this will be represented as a minimum, negative spike in GAIC.
 
 
-* NOTE: Fasta file headers must be of the form ID_Year for example: "K113H63_2005", before tn93 analysis is run on them. Year may be collection or diagnostic, models will work better with a diagnostic year
+NOTE: Fasta file headers must be of the form ID_Year for example: "K113H63_2005", before tn93 analysis is run on them. Year may be collection or diagnostic, models will work better with a diagnostic year
   
-* NOTE: This method performs best on large data sets (>1000 sequences). It can also be ineffective if the newest time-point has a lack of data (<100 sequences)
+NOTE: This method performs best on large data sets (>1000 sequences). It can also be ineffective if the newest time-point has a lack of data (<100 sequences)
+
 
 
 ### USAGE:
@@ -14,24 +15,33 @@ The script genSpaceMAUP.R takes in tn93 distance data from a set of population s
 `Rscript genSpaceMAUP.R -f tn93Output.txt -o run1`
 
 
+
 ### REQUIREMENTS:
 
 * R.utils [https://cran.r-project.org/web/packages/R.utils/index.html)
+
 * dplyr [https://cran.r-project.org/web/packages/dplyr/index.html]
+
 * tn93 [https://github.com/veg/tn93]
+
 
 
 ### OPTIONS:
 
 * **f**: The filepath to a tn93 output file. By default, this takes the standard input.
+
 * **o**: The output filepath (do not include extensions). This defaults to the input filename without extensions
+
 * **g**: The file path to saved graphical info. If you have already run this and saved a graph, this will save the trouble of making one.
+
+
 
 ### OUTPUT:
 
 * A ".rds" file with the suffix "_GD.rds" representing graph and model information at 50 different cutoff distances. 
 
 * A ".rds" file with the suffix "_Optimum.rds" representing graph and model information at the optimum cutoff distance. 
+
 
 
 The information outputted at each cutoff is stored in a list which acts as output. A brief overview of the elements of that list...
