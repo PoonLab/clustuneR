@@ -42,25 +42,21 @@ NOTE: This method performs best on large data sets (>1000 sequences). It can als
 
 * A ".rds" file with the suffix "_Optimum.rds" representing graph and model information at the optimum cutoff distance. 
 
+** **v**: A data frame of vertices. Each vertex represents a dated sequence
 
+** **e**: A data frame of edges between vertices. This will cover a completely connected graph, made from $v
 
-The information outputted at each cutoff is stored in a list which acts as output. A brief overview of the elements of that list...
-
-* **v**: A data frame of vertices. Each vertex represents a dated sequence
-
-* **e**: A data frame of edges between vertices. This will cover a completely connected graph, made from $v
-
-* **f**: Used in the creation of our predictive model. Records the minimum retrospective edge from each case and it's time-lag 
+** **f**: Used in the creation of our predictive model. Records the minimum retrospective edge from each case and it's time-lag 
 (summarizes as positives for a binomial model).
 
-* **g**: Growth of clusters. Each new case linked to a given cluster is considered an instance of growth. Note that new cases are only linked to their closest retrospective neighbour and only if that distance is below the cutoff distance.
+** **g**: Growth of clusters. Each new case linked to a given cluster is considered an instance of growth. Note that new cases are only linked to their closest retrospective neighbour and only if that distance is below the cutoff distance.
 
-* **c**: Size of clusters (before growth)
+** **c**: Size of clusters (before growth)
 
-* **gaic**: The GAIC measurement. Measured from $nullFit and $ageFit
+** **gaic**: The GAIC measurement. Measured from $nullFit and $ageFit
 
-* **nullFit**: The fit of a null model of growth. In this case, every case is considered equally likely to connect to new cases
+** **nullFit**: The fit of a null model of growth. In this case, every case is considered equally likely to connect to new cases
 
-* **ageFit**: The fit of our proposed model. In this case, cases closer to the newest cases in time are considered more likely to connect to them, thus weigthing their clusters higher
+** **ageFit**: The fit of our proposed model. In this case, cases closer to the newest cases in time are considered more likely to connect to them, thus weigthing their clusters higher
 
-* **ageMod**: The model generated from our data set which informs ageFit. Currently this is a binomial model based on $f
+** **ageMod**: The model generated from our data set which informs ageFit. Currently this is a binomial model based on $f
