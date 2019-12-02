@@ -40,7 +40,7 @@ pdf(file = paste0(oFile, "_VS.pdf"))
 par(mfrow=c(2, 1), mar = c(1,4,1,2), oma=c(5,4,1,2), cex.lab=1.2)
 
 #Plot both AIC measurements for comparison
-plot(cutoffs, modAIC, ylab="AIC Comparison", xlab="", ylim=c(-80,400))
+plot(cutoffs, modAIC, ylab="AIC Comparison", xlab="", ylim=c(0,max(c(modAIC, nullAIC))))
 
 #Background
 bg <- par('usr')
@@ -57,9 +57,8 @@ abline(v=cutoffs[which(gaics==min(gaics))[[1]]], lty=3)
 polygon(c(0, cutoffs, max(cutoffs)), c(0, modAIC, 0) , col=rgb(1,0,0,0.4))
 polygon(c(0, cutoffs, max(cutoffs)), c(0, nullAIC, 0) , col=rgb(0,1,1,0.4))
 legend("topright",
-       legend=c(paste0("Proposed Model"), 
-                paste0("Null Model")), 
-       fill=c(rgb(1,0,0,0.4), rgb(0,1,1,0.4)))
+       legend=c("Proposed Model", "Null Model", "Overlap"), 
+       fill=c(rgb(1,0,0,0.4), rgb(0,1,1,0.4), rgb(0,0.65,0.65,0.7)))
 
 
 #Plot GAIC
@@ -81,7 +80,7 @@ abline(h=0)
 
 #Locate minimum and annotate Graph
 abline(v=cutoffs[which(gaics==min(gaics))[[1]]], lty=3)
-text(cutoffs[which(gaics==min(gaics))[[1]]+1.5], min(gaics), labels= round(min(gaics)))
+text(cutoffs[which(gaics==min(gaics))[[1]]+2.0], min(gaics), labels= round(min(gaics)))
 text(cutoffs[which(gaics==min(gaics))[[1]]], max(gaics)-0.10*(max(gaics)), labels=cutoffs[which(gaics==min(gaics))[[1]]])
 
 #Title
