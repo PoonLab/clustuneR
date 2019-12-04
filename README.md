@@ -55,7 +55,7 @@ The "example" directory contains example output and data-set for user testing.
 
   * **c**: Size of clusters (before growth)
 
-  * **gaic**: The GAIC measurement. Measured from $nullFit and **$ageFit**
+  * **gaic**: The GAIC measurement. Measured from **$nullFit** and **$ageFit**
 
   * **nullFit**: The fit of a null model of growth. In this case, every case is considered equally likely to connect to new cases
 
