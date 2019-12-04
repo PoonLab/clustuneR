@@ -17,7 +17,7 @@ Our code does this by using data from earlier time to establish a log-linked mod
 
 `Rscript MountainPlot.R -f ../ExampleData/Example_tn93.txt -o Example`
 
-The "Example" directory contains example output and data-set for user testing. 
+The "example" directory contains example output and data-set for user testing. 
 
 
 ### REQUIREMENTS:
