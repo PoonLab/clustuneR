@@ -17,7 +17,7 @@ Our code does this by using data from earlier time to establish a log-linked mod
 
 `Rscript MountainPlot.R -f ../ExampleData/Example_tn93.txt -o Example`
 
-The "Example" directory contains example output and data-set for user testing. 
+The "example" directory contains example output and data-set for user testing. 
 
 
 ### REQUIREMENTS:
@@ -55,7 +55,7 @@ The "Example" directory contains example output and data-set for user testing.
 
   * **c**: Size of clusters (before growth)
 
-  * **gaic**: The GAIC measurement. Measured from $nullFit and **$ageFit**
+  * **gaic**: The GAIC measurement. Measured from **$nullFit** and **$ageFit**
 
   * **nullFit**: The fit of a null model of growth. In this case, every case is considered equally likely to connect to new cases
 
