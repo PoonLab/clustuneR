@@ -9,6 +9,8 @@ impTN93 <- function(iFile, minNS=63){
   #@return: A list of 3 Data frames. An edge list (weighted by TN93 genetic distance), a vertex list, 
   #         and a list of minimum edges, for the future establishment of a timepoint-based model
   
+  #iFile <- "~/Data/NAlberta/analysis_Gd/tn93NAsubB.txt"
+  
   #Reading input file as a data frame. This will essentially act as an edgelist
   idf <- read.csv(iFile, stringsAsFactors = F)
   temp1 <- sapply(idf$ID1, function(x) (strsplit(x,'_')[[1]])[[1]])
