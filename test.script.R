@@ -1,16 +1,8 @@
-#Check Out: https://r-pkgs.org/
-
-source("R/analysis.R")
-source("R/tree.setup.R")
-source("R/pplacer.utils.R")
-source("R/tree.clustering.R")
-source("R/sequence.setup.R")
-source("R/graph.setup.R")
-source("R/graph.clustering.R")
-
+#' This is a testing script to run through a variety of common function uses
+#' example txt log files and sequence/tree data inputs are obtained from data
+load("data/test_data.RData")
 
 ###SEQ/TREE SETUP TESTING
-seqs.full <- ape::read.FASTA("R/test_seq.fasta")
 seq.info <- pull.headers(seqs.full,var.names = c("ID", "CollectionDate", "Subtype"),
                          var.transformations =list(as.character, as.Date, as.factor))
 data.table::setnames(seq.info, "CollectionDate", "Time")

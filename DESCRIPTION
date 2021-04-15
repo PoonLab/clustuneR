@@ -2,15 +2,17 @@ Package: MountainPlot
 Title: What the Package Does (One Line, Title Case)
 Version: 0.0.0.9000
 Authors@R: 
-    person(given = "First",
-           family = "Last",
+    person(given = "Connor",
+           family = "Chato",
            role = c("aut", "cre"),
-           email = "first.last@example.com",
-           comment = c(ORCID = "YOUR-ORCID-ID"))
+           email = "ConnorChato@gmail.com")
+    person(given = "Art",
+           family = "Poon",
+           role = c("aut", "ths"))
 Description: What the package does (one paragraph).
-License: `use_mit_license()`, `use_gpl3_license()` or friends to
-    pick a license
+License: `use_gpl3_license()`
 Encoding: UTF-8
+Depends: data.table, ape, dplyr, parallel, jsonlite, digest, phangorn
 LazyData: true
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.1.1
