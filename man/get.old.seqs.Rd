@@ -2,19 +2,19 @@
 % Please edit documentation in R/sequence.setup.R
 \name{get.old.seqs}
 \alias{get.old.seqs}
-\title{Get a subset of sequences based on the old sequences in seq.info}
+\title{Obtain "old" sequences}
 \usage{
 get.old.seqs(seqs, seq.info)
 }
 \arguments{
-\item{seqs:}{A full alaignment}
+\item{seqs:}{A full alignment}
 
 \item{seq.info:}{A set of seq.info. If provided, may be used to ascertain old sequences from new
 A tree is generally only to be built from old sequences}
 }
 \value{
-: Filtered sequences
+Filtered sequences, an ape seq object
 }
 \description{
-Get a subset of sequences based on the old sequences in seq.info
+Get a subset of sequences from an ape seq object based on seq.info data which is not labeled new
 }

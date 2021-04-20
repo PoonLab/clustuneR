@@ -2,9 +2,7 @@
 % Please edit documentation in R/tree.clustering.R
 \name{mono.pat.cluster}
 \alias{mono.pat.cluster}
-\title{Clusters as a monophyletic clade under a high-confidence common ancestor.
-The pairwise patristic distances in this clade must all
-NOTE: Running this method requires a tree object with growth.info defined}
+\title{Obtain clusters based on a monophyletic group in tree}
 \usage{
 mono.pat.cluster(
   t,
@@ -29,7 +27,7 @@ mono.pat.cluster(
 \item{boot.thresh:}{The minimum bootstrap criterion defining clusters}
 }
 \value{
-: A data table which extends a subset of node.info. This includes growth info
+A data table which extends a subset of node.info. This includes growth info
 }
 \description{
 Clusters as a monophyletic clade under a high-confidence common ancestor.

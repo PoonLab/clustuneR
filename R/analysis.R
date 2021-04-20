@@ -1,10 +1,13 @@
+#' Multiple clusters from a parameter set
+#'
 #' Runs a given clustering method over a range of parameters values.
+#' If growth is attached This result can be fed into a fit.analysis
+#'
+#' @param param.list: A named list of parameter sets. Each must correspond to the clustering method used.
+#' @param rangeID: If several different parameter ranges are used, the rangeID can identify them.
+#' @param mc.cores: A parallel option
+#' @return A larger data.table with parameter sets noted
 multi.cluster <- function(cluster.method, param.list, mc.cores = 1, verbose = T, rangeID = 0) {
-  #' @param param.list: A named list of parameter sets. Each must correspond to the clustering method used.
-  #' @param rangeID: If several different parameter ranges are used, the rangeID can identify them.
-  #' @param mc.cores: A parallel option
-  #' @param verbose: An output monitoring option
-  #' @return: A larger data.table with parameter sets noted
 
   # Cluster method loop
   cluster.range <- parallel::mclapply(1:length(param.list), function(i) {
@@ -23,10 +26,21 @@ multi.cluster <- function(cluster.method, param.list, mc.cores = 1, verbose = T,
   return(cluster.range)
 }
 
-#' Runs an AIC analysis on a range of cluster sets
-#' The AIC obtained is based on a predictive model of cluster growth
-#' NOTE: The default additional parameter for this analysis is "Time". This may or may not be a row in inputted cluster.range data
-#' The default outcome variable is growth. This generally means that this function is expecting a cluster with annotated growth data.
+##- TO-DO: Update this to be less demanding of a full.model -##
+#' AIC analysis on a range of cluster sets
+#'
+#' Fits a predictive model of cluster growth to sets of cluster data (growth is required).
+#' AIC is recorded and returned to indicate performance with respect to cluster size.
+#' NOTE: The default additional parameter for this analysis is "Time".
+#' This may or may not be a row in inputted cluster.range data. This is also to be changed.
+#'
+#' @param cluster.data: Inputted set(s) of cluster data. May or may not be sorted into ranges
+#' @param mc.cores: A parallel option
+#' @param predictor.model: An inputted predictive model function to be used on the data set.
+#' @param full.formula: The full model for the prediction of growth. This will be compared to a null Growth~Size model
+#' @param predictor.transformations: A named list of transformation functions for each predictor variable
+#' @return A data.table of analysis results. Several important summary values such as null and full AIC are proposed here
+
 fit.analysis <- function(cluster.data, mc.cores = 1, null.formula = Growth ~ Size, full.formula = Growth ~ Size + Time,
                          predictor.model = function(f, x) {
                            glm(formula = f, data = x, family = "poisson")
@@ -34,12 +48,6 @@ fit.analysis <- function(cluster.data, mc.cores = 1, null.formula = Growth ~ Siz
                          predictor.transformations = list("Time" = function(x) {
                            mean(x)
                          })) {
-  #' @param cluster.data: Inputted set(s) of cluster data. May or may not be sorted into ranges
-  #' @param mc.cores: A parallel option
-  #' @param predictor.model: An inputted predictive model function to be used on the data set.
-  #' @param full.formula: The full model for the prediction of growth. This will be compared to a null Growth~Size model
-  #' @param predictor.transformations: A named list of transformation functions for each predictor variable
-  #' @return: A data.table of analysis results. Several important summary values such as null and full AIC are proposed here
 
   # Check inputs
   predictors <- names(predictor.transformations)
@@ -85,12 +93,16 @@ fit.analysis <- function(cluster.data, mc.cores = 1, null.formula = Growth ~ Siz
   return(cluster.analysis)
 }
 
-#' Plots the difference in AIC across the proposed and null models
-#' This will reach a central optima, as extremes produce low AIC differences
-#' Greater negative values mean larger improvement relative to null model
+#' Plot the difference in AIC across the proposed and null models
+#'
+#' A visualization tool to see the AIC of models with respect to cluster sets
+#' The difference from a null model will reach a central optima, as extremes produce low AIC differences
+#' Greater negative values mean larger improvement relative to a null model
+#'
+#' @param res: The result of a fit.analysis() run.
+#' @return A set of AIC differences.
 plot.aic.diff <- function(res) {
-  #' @param res: The result of a fit.analysis() run.
-  #' @return: A set of AIC differences.
+
 
   # Check inputs
   if (!all(c("NullFit", "FullFit") %in% colnames(res))) {

@@ -2,7 +2,7 @@
 % Please edit documentation in R/analysis.R
 \name{multi.cluster}
 \alias{multi.cluster}
-\title{Runs a given clustering method over a range of parameters values.}
+\title{Multiple clusters from a parameter set}
 \usage{
 multi.cluster(
   cluster.method,
@@ -18,12 +18,11 @@ multi.cluster(
 \item{rangeID:}{If several different parameter ranges are used, the rangeID can identify them.}
 
 \item{mc.cores:}{A parallel option}
-
-\item{verbose:}{An output monitoring option}
 }
 \value{
-: A larger data.table with parameter sets noted
+A larger data.table with parameter sets noted
 }
 \description{
 Runs a given clustering method over a range of parameters values.
+If growth is attached This result can be fed into a fit.analysis
 }

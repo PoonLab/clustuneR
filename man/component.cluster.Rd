@@ -14,9 +14,10 @@ component.cluster(g, dist.thresh = 0.007, setID = 0)
 \item{setID:}{If several different parameter ranges are used, the setID can identify them}
 }
 \value{
-: A data table which represents cluster information. This includes growth info
+A data table which represents cluster information. This includes growth info
 Because data.tables are being used, this prevents original values being reassigned via pointer
 }
 \description{
-Create clusters based on the components of a graph
+This uses a homogenization algorithm to identify disconnected components in a graph.
+Edges are filtered away using a distance threshold to result in components.
 }

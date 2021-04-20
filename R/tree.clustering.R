@@ -1,12 +1,15 @@
+#' Obtain clusters based on path to ancestor in tree
+#'
 #' Clusters are defined as a series of tips diverging from A high confidence common ancestor.
 #' This divergence must be done Through a series of short branches.
 #' NOTE: Running this method requires a tree object with growth.info and path.info defined
+#'
+#' @param t: The input tree file, annotated with vertex and edge information
+#' @param step.thresh: The maximum branch length criterion defining clusters
+#' @param boot.thresh: The minimum bootstrap criterion defining clusters
+#' @param setID: If several different parameter ranges are used, the setID can identify them
+#' @return A data table which extends a subset of node.info. This includes growth info
 step.cluster <- function(t, branch.thresh = 0.007, boot.thresh = 0, setID = 0) {
-  #' @param t: The input tree file, annotated with vertex and edge information
-  #' @param step.thresh: The maximum branch length criterion defining clusters
-  #' @param boot.thresh: The minimum bootstrap criterion defining clusters
-  #' @param setID: If several different parameter ranges are used, the setID can identify them
-  #' @return: A data table which extends a subset of node.info. This includes growth info
 
   # Input Checking
   if (!is.numeric(branch.thresh) | !is.numeric(boot.thresh)) {
@@ -82,17 +85,20 @@ step.cluster <- function(t, branch.thresh = 0.007, boot.thresh = 0, setID = 0) {
 
 ## - TO-DO: SOLVE MONOPHYLETIC CLUSTER GROWTH IN A SIMPLE WAY -##
 ## - TO-DO: Update Header info-##
+#' Obtain clusters based on a monophyletic group in tree
+#'
 #' Clusters as a monophyletic clade under a high-confidence common ancestor.
 #' The pairwise patristic distances in this clade must all
 #' NOTE: Running this method requires a tree object with growth.info defined
+#'
+#' @param t: The input tree file, annotated with vertex and edge information
+#' @param dist.criterion: A particular column in node.info that must be less than a distance threshold
+#' @param dist.thresh: The threshold required for clustering.
+#' @param verbose: An output monitoring option
+#' @param setID: If several different parameter ranges are used, the setID can identify them.
+#' @param boot.thresh: The minimum bootstrap criterion defining clusters
+#' @return A data table which extends a subset of node.info. This includes growth info
 mono.pat.cluster <- function(t, dist.thresh, boot.thresh = 0, dist.criterion = "max.patristic.dist", verbose = T, setID = 0) {
-  #' @param t: The input tree file, annotated with vertex and edge information
-  #' @param dist.criterion: A particular column in node.info that must be less than a distance threshold
-  #' @param dist.thresh: The threshold required for clustering.
-  #' @param verbose: An output monitoring option
-  #' @param setID: If several different parameter ranges are used, the setID can identify them.
-  #' @param boot.thresh: The minimum bootstrap criterion defining clusters
-  #' @return: A data table which extends a subset of node.info. This includes growth info
 
   # Input Checking
   if (!is.numeric(dist.thresh) | !is.numeric(boot.thresh)) {

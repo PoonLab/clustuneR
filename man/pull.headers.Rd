@@ -2,11 +2,9 @@
 % Please edit documentation in R/sequence.setup.R
 \name{pull.headers}
 \alias{pull.headers}
-\title{Translates a set of sequence headers into a data.frame object for data input.
-NOTE: This must contain, at minimum, a set of unique sequence id's (labelled ID) and one other variable
-NOTE: A certain subset of sequences}
+\title{Get seq.info from headers}
 \usage{
-pull.headers(seqs, var.names, var.transformations = list(), sep = "_")
+\method{pull}{headers}(seqs, var.names, var.transformations = list(), sep = "_")
 }
 \arguments{
 \item{seqs:}{An inputted alignment using ape's sequence handling}
@@ -19,7 +17,7 @@ these transform each row into it's proper type. by default, each type is set to 
 \item{sep:}{The separator character that splits upthe headers in the fasta file}
 }
 \value{
-: A data.table object containing the information associated with each sequence.
+A data.table object containing the information associated with each sequence.
 }
 \description{
 Translates a set of sequence headers into a data.frame object for data input.

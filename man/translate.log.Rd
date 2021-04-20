@@ -2,8 +2,7 @@
 % Please edit documentation in R/pplacer.utils.R
 \name{translate.log}
 \alias{translate.log}
-\title{Parses the logfile output of tree building software to find information relevant to pplacer.
-Prints stats to a temporary ref.pkg file and returns the path to that file.}
+\title{Build a stats.json}
 \usage{
 translate.log(log.file, program, substitution.model = "GTR")
 }
@@ -16,9 +15,11 @@ Can be "FastTree", "RAxML" or "IQ-TREE".}
 \item{substitution.model:}{The substitution model used. Currently only accepts "GTR"}
 }
 \value{
-: a json output to be written to a given stats.file for pplacer
+A json output to be written to a given stats.file for pplacer
 }
 \description{
+Parses the logfile output of tree building software to find information relevant to pplacer.
+Prints stats to a temporary ref.pkg file and returns the path to that file.
 NOTE: Currently compatible with GTR substitution model and either FastTree or IQ-TREE logfiles.
 Working to extend this to PhyML logfiles, and then to different models of evolution
 }

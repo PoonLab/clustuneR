@@ -2,9 +2,7 @@
 % Please edit documentation in R/pplacer.utils.R
 \name{run.pplacer_guppy}
 \alias{run.pplacer_guppy}
-\title{A wrapper for pplacer's basic run function coupled with guppy's sing function.
-Together, these extend fixed trees with most likely placement locations.
-TODO: Include package binaries such that it is not a requirement to install both pplacer and guppy}
+\title{Get grown phylogenies}
 \usage{
 run.pplacer_guppy(refpkg)
 }
@@ -12,10 +10,9 @@ run.pplacer_guppy(refpkg)
 \item{refpkg:}{A reference package to use as input for pplacer}
 }
 \value{
-: A set of trees, each containing 1 new sequence.
+A set of trees, each containing 1 new sequence.
 }
 \description{
 A wrapper for pplacer's basic run function coupled with guppy's sing function.
 Together, these extend fixed trees with most likely placement locations.
-TODO: Include package binaries such that it is not a requirement to install both pplacer and guppy
 }

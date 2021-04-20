@@ -2,8 +2,7 @@
 % Please edit documentation in R/tree.setup.R
 \name{annotate.growth}
 \alias{annotate.growth}
-\title{Add the growth information onto the known tree.
-This uses pplacer to ensure that previously defined clusters remain the same.}
+\title{Add the growth information onto the known tree.}
 \usage{
 annotate.growth(t, t.grown, mc.cores = 1)
 }
@@ -15,9 +14,9 @@ annotate.growth(t, t.grown, mc.cores = 1)
 \item{mc.cores:}{A parallel option}
 }
 \value{
-: The input tree annotated with growth information stored as growth.info.
+The input tree annotated with growth information stored as growth.info.
 }
 \description{
-Add the growth information onto the known tree.
 This uses pplacer to ensure that previously defined clusters remain the same.
+New tips are assigned a set of possible placements in the tree.
 }

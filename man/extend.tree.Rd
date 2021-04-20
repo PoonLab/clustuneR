@@ -2,8 +2,7 @@
 % Please edit documentation in R/tree.setup.R
 \name{extend.tree}
 \alias{extend.tree}
-\title{Extends an ape tree object to include annotated node and path information.
-By default this will include some basic node info like bootstraps. Other annotations are optional.}
+\title{Prepare a tree for clustering}
 \usage{
 extend.tree(t, seq.info, paths.annotated = T, mc.cores = 1)
 }
@@ -18,7 +17,7 @@ By default, new sequences are assigned as those not in the tree.}
 \item{paths.annotated:}{An option to add path info for the tree. Useful for some tree-based clustering methods}
 }
 \value{
-: the tree annotated with node information and seq.info
+The tree annotated with node information and seq.info
 }
 \description{
 Extends an ape tree object to include annotated node and path information.

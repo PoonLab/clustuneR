@@ -2,9 +2,7 @@
 % Please edit documentation in R/tree.clustering.R
 \name{step.cluster}
 \alias{step.cluster}
-\title{Clusters are defined as a series of tips diverging from A high confidence common ancestor.
-This divergence must be done Through a series of short branches.
-NOTE: Running this method requires a tree object with growth.info and path.info defined}
+\title{Obtain clusters based on path to ancestor in tree}
 \usage{
 step.cluster(t, branch.thresh = 0.007, boot.thresh = 0, setID = 0)
 }
@@ -18,7 +16,7 @@ step.cluster(t, branch.thresh = 0.007, boot.thresh = 0, setID = 0)
 \item{setID:}{If several different parameter ranges are used, the setID can identify them}
 }
 \value{
-: A data table which extends a subset of node.info. This includes growth info
+A data table which extends a subset of node.info. This includes growth info
 }
 \description{
 Clusters are defined as a series of tips diverging from A high confidence common ancestor.

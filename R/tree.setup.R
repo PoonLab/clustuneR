@@ -1,12 +1,15 @@
+#' Prepare a tree for clustering
+#'
 #' Extends an ape tree object to include annotated node and path information.
 #' By default this will include some basic node info like bootstraps. Other annotations are optional.
+#'
+#' @param t: An inputted tree using ape's tree handling
+#' @param seq.info: A data frame or data.table object containing the sequences.
+#' By default, new sequences are assigned as those not in the tree.
+#' @param mc.cores: Passed to annotate.nodes as a parallel option
+#' @param paths.annotated: An option to add path info for the tree. Useful for some tree-based clustering methods
+#' @return The tree annotated with node information and seq.info
 extend.tree <- function(t, seq.info, paths.annotated = T, mc.cores = 1) {
-  #' @param t: An inputted tree using ape's tree handling
-  #' @param seq.info: A data frame or data.table object containing the sequences.
-  #' By default, new sequences are assigned as those not in the tree.
-  #' @param mc.cores: Passed to annotate.nodes as a parallel option
-  #' @param paths.annotated: An option to add path info for the tree. Useful for some tree-based clustering methods
-  #' @return: the tree annotated with node information and seq.info
 
   # Root the tree (if unrooted) and resolve multichotomies
   if (!ape::is.rooted(t)) {
@@ -39,13 +42,16 @@ extend.tree <- function(t, seq.info, paths.annotated = T, mc.cores = 1) {
   return(t)
 }
 
-
+##-TO-DO: Mask from user
+#' Prepare nodes in tree for clustering
+#'
 #' Called by extend.tree. Adds additional node info to the tree. Required for mono.cluster()
 #' NOTE: Unlabeled nodes are defaulted to a bootstrap value of 1
+#'
+#' @param t: An inputted tree using ape's tree handling. This must be annotated with seq.info
+#' @param mc.cores: A parallel option
+#' @return A slightly more detailed data table to replace "node.info" to a given tree.
 annotate.nodes <- function(t, mc.cores = 1) {
-  #' @param t: An inputted tree using ape's tree handling. This must be annotated with seq.info
-  #' @param mc.cores: A parallel option
-  #' @return: A slightly more detailed data table to replace "node.info" to a given tree.
 
   # Unlabelled nodes are defaulted to a bootstrap value of 1
   t$node.label[which(t$node.label %in% "")] <- 1
@@ -82,13 +88,16 @@ annotate.nodes <- function(t, mc.cores = 1) {
   return(node.info)
 }
 
-
+##-TO-DO: Mask from user
+#' Get paths relative to starting nodes
+#'
 #' Called by extend.tree. Adds path info to the tree. Required for step.cluster()
+#'
+#' @param t: An inputted tree using ape's tree handling
+#' @return A matrix labelled "path.info" to attach to a given tree.
+#' For each node in the path the branch lengths (below node) and bootstraps are given
+#' For the terminal node, no branch length is given below the node and the bootstrap is 1
 annotate.paths <- function(t) {
-  #' @param t: An inputted tree using ape's tree handling
-  #' @return: A matrix labelled "path.info" to attach to a given tree.
-  #' For each node in the path the branch lengths (below node) and bootstraps are given
-  #' For the terminal node, no branch length is given below the node and the bootstrap is 1
 
   # Get paths and length information from terminal nodes
   lens <- ape::node.depth.edgelength(t)
@@ -137,12 +146,16 @@ annotate.paths <- function(t) {
 
 
 #' Add the growth information onto the known tree.
+#'
 #' This uses pplacer to ensure that previously defined clusters remain the same.
+#' New tips are assigned a set of possible placements in the tree.
+#'
+#' @param t: An inputted tree using ape's tree handling
+#' @param t.growth: A set of trees from pplacer. Each with a newly added tip.
+#' @param mc.cores: A parallel option
+#' @return The input tree annotated with growth information stored as growth.info.
 annotate.growth <- function(t, t.grown, mc.cores = 1) {
-  #' @param t: An inputted tree using ape's tree handling
-  #' @param t.growth: A set of trees from pplacer. Each with a newly added tip.
-  #' @param mc.cores: A parallel option
-  #' @return: The input tree annotated with growth information stored as growth.info.
+
 
   # Obtain placement information from trees.
   # New IDs, bootstap + branch lengths of new node

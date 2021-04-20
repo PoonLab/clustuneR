@@ -1,6 +1,7 @@
 #' This is a testing script to run through a variety of common function uses
 #' example txt log files and sequence/tree data inputs are obtained from data
 load("data/test_data.RData")
+devtools::load_all()
 
 ###SEQ/TREE SETUP TESTING
 seq.info <- pull.headers(seqs.full,var.names = c("ID", "CollectionDate", "Subtype"),

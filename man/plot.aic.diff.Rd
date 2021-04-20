@@ -2,9 +2,7 @@
 % Please edit documentation in R/analysis.R
 \name{plot.aic.diff}
 \alias{plot.aic.diff}
-\title{Plots the difference in AIC across the proposed and null models
-This will reach a central optima, as extremes produce low AIC differences
-Greater negative values mean larger improvement relative to null model}
+\title{Plot the difference in AIC across the proposed and null models}
 \usage{
 \method{plot}{aic.diff}(res)
 }
@@ -12,10 +10,10 @@ Greater negative values mean larger improvement relative to null model}
 \item{res:}{The result of a fit.analysis() run.}
 }
 \value{
-: A set of AIC differences.
+A set of AIC differences.
 }
 \description{
-Plots the difference in AIC across the proposed and null models
-This will reach a central optima, as extremes produce low AIC differences
-Greater negative values mean larger improvement relative to null model
+A visualization tool to see the AIC of models with respect to cluster sets
+The difference from a null model will reach a central optima, as extremes produce low AIC differences
+Greater negative values mean larger improvement relative to a null model
 }

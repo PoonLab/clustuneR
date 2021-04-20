@@ -2,10 +2,7 @@
 % Please edit documentation in R/analysis.R
 \name{fit.analysis}
 \alias{fit.analysis}
-\title{Runs an AIC analysis on a range of cluster sets
-The AIC obtained is based on a predictive model of cluster growth
-NOTE: The default additional parameter for this analysis is "Time". This may or may not be a row in inputted cluster.range data
-The default outcome variable is growth. This generally means that this function is expecting a cluster with annotated growth data.}
+\title{AIC analysis on a range of cluster sets}
 \usage{
 fit.analysis(
   cluster.data,
@@ -29,11 +26,11 @@ fit.analysis(
 \item{predictor.transformations:}{A named list of transformation functions for each predictor variable}
 }
 \value{
-: A data.table of analysis results. Several important summary values such as null and full AIC are proposed here
+A data.table of analysis results. Several important summary values such as null and full AIC are proposed here
 }
 \description{
-Runs an AIC analysis on a range of cluster sets
-The AIC obtained is based on a predictive model of cluster growth
-NOTE: The default additional parameter for this analysis is "Time". This may or may not be a row in inputted cluster.range data
-The default outcome variable is growth. This generally means that this function is expecting a cluster with annotated growth data.
+Fits a predictive model of cluster growth to sets of cluster data (growth is required).
+AIC is recorded and returned to indicate performance with respect to cluster size.
+NOTE: The default additional parameter for this analysis is "Time".
+This may or may not be a row in inputted cluster.range data. This is also to be changed.
 }

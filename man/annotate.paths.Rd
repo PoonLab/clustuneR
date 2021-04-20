@@ -2,7 +2,7 @@
 % Please edit documentation in R/tree.setup.R
 \name{annotate.paths}
 \alias{annotate.paths}
-\title{Called by extend.tree. Adds path info to the tree. Required for step.cluster()}
+\title{Get paths relative to starting nodes}
 \usage{
 annotate.paths(t)
 }
@@ -10,7 +10,7 @@ annotate.paths(t)
 \item{t:}{An inputted tree using ape's tree handling}
 }
 \value{
-: A matrix labelled "path.info" to attach to a given tree.
+A matrix labelled "path.info" to attach to a given tree.
 For each node in the path the branch lengths (below node) and bootstraps are given
 For the terminal node, no branch length is given below the node and the bootstrap is 1
 }

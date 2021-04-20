@@ -1,15 +1,13 @@
 Package: MountainPlot
-Title: What the Package Does (One Line, Title Case)
+Title: Molecular clustering implementation and predictive optimization
 Version: 0.0.0.9000
 Authors@R: 
-    person(given = "Connor",
-           family = "Chato",
-           role = c("aut", "cre"),
-           email = "ConnorChato@gmail.com")
-    person(given = "Art",
-           family = "Poon",
-           role = c("aut", "ths"))
-Description: What the package does (one paragraph).
+  person(given = "Connor", family = "Chato", role = c("aut", "cre"), email = "ConnorChato@gmail.com")
+Description: This package can take in a phylogeny or a genetic sequence alignment 
+  using ape's implementation of these objects and group individual sequences into 
+  clusters based on a tree or graph built from their relationships. Given some 
+  specification of "New" sequences, cluster growth can be defined as new sequences
+  joining old clusters. Growth as an outcome can be then be fit to a model and the performance of this model can be used to judge optimal clusters.
 License: `use_gpl3_license()`
 Encoding: UTF-8
 Depends: data.table, ape, dplyr, parallel, jsonlite, digest, phangorn

@@ -2,8 +2,7 @@
 % Please edit documentation in R/tree.setup.R
 \name{annotate.nodes}
 \alias{annotate.nodes}
-\title{Called by extend.tree. Adds additional node info to the tree. Required for mono.cluster()
-NOTE: Unlabeled nodes are defaulted to a bootstrap value of 1}
+\title{Prepare nodes in tree for clustering}
 \usage{
 annotate.nodes(t, mc.cores = 1)
 }
@@ -13,7 +12,7 @@ annotate.nodes(t, mc.cores = 1)
 \item{mc.cores:}{A parallel option}
 }
 \value{
-: A slightly more detailed data table to replace "node.info" to a given tree.
+A slightly more detailed data table to replace "node.info" to a given tree.
 }
 \description{
 Called by extend.tree. Adds additional node info to the tree. Required for mono.cluster()

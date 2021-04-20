@@ -2,9 +2,7 @@
 % Please edit documentation in R/pplacer.utils.R
 \name{taxit.create}
 \alias{taxit.create}
-\title{A wrapper for the taxit create function used by pplacer. This will generate a summary json
-See pplacer's basic function regarding alignments and tree function
-NOTE: Creates temporary files. These are only deleted with the end of the session}
+\title{Create a refpkg}
 \usage{
 taxit.create(t, seqs.full, stats.json, locus = "LOCUS")
 }
@@ -18,7 +16,7 @@ taxit.create(t, seqs.full, stats.json, locus = "LOCUS")
 \item{locus:}{Extra information required for the summary json}
 }
 \value{
-: Path to a temporary refpkg directory
+Path to a temporary refpkg directory
 }
 \description{
 A wrapper for the taxit create function used by pplacer. This will generate a summary json
