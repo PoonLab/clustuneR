@@ -2,16 +2,14 @@
 % Please edit documentation in R/analysis.R
 \name{fit.analysis}
 \alias{fit.analysis}
-\title{AIC analysis on a range of cluster sets}
+\title{Predictive analysis on a range of cluster sets}
 \usage{
 fit.analysis(
   cluster.data,
   mc.cores = 1,
-  null.formula = Growth ~ Size,
-  full.formula = Growth ~ Size + Time,
-  predictor.model = function(f, x) {     glm(formula = f, data = x, family = "poisson")
-    },
-  predictor.transformations = list(Time = function(x) {     mean(x) })
+  predictor.transformations = list(),
+  predictive.models = list(NullModel = function(x) {     glm(Size ~ Growth, data = x,
+    family = "poisson") })
 )
 }
 \arguments{
@@ -19,18 +17,15 @@ fit.analysis(
 
 \item{mc.cores:}{A parallel option}
 
-\item{predictor.model:}{An inputted predictive model function to be used on the data set.}
+\item{predictor.transformations:}{A named list of transformation functions for each predictor variable.
+This name should correspond to a column from the cluster.data, which will be taken as input for the function}
 
-\item{full.formula:}{The full model for the prediction of growth. This will be compared to a null Growth~Size model}
-
-\item{predictor.transformations:}{A named list of transformation functions for each predictor variable}
+\item{predictive.models:}{A named list of functions, each of which applies a model to inputted data (x). See default null for example.}
 }
 \value{
 A data.table of analysis results. Several important summary values such as null and full AIC are proposed here
 }
 \description{
-Fits a predictive model of cluster growth to sets of cluster data (growth is required).
-AIC is recorded and returned to indicate performance with respect to cluster size.
-NOTE: The default additional parameter for this analysis is "Time".
-This may or may not be a row in inputted cluster.range data. This is also to be changed.
+Fits a predictive model of some outcome (by default, cluster growth) to sets of cluster data.
+This fit measurement is recorded for each use of the predictive model on a given cluister set
 }

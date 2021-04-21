@@ -22,5 +22,4 @@ A data.table object containing the information associated with each sequence.
 \description{
 Translates a set of sequence headers into a data.frame object for data input.
 NOTE: This must contain, at minimum, a set of unique sequence id's (labelled ID) and one other variable
-NOTE: A certain subset of sequences
 }

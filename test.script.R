@@ -3,14 +3,26 @@
 load("data/test_data.RData")
 devtools::load_all()
 
-###SEQ/TREE SETUP TESTING
+###SEQ/TREE/MODEL SETUP TESTING
 seq.info <- pull.headers(seqs.full,var.names = c("ID", "CollectionDate", "Subtype"),
                          var.transformations =list(as.character, as.Date, as.factor))
-data.table::setnames(seq.info, "CollectionDate", "Time")
 seq.info$ID <- NULL
-seq.info <- annotate.new(seq.info)
-tree.old <- ape::read.tree("R/test_old_tree.nwk")
-tree.full <- ape::read.tree("R/test_full_tree.nwk")
+new.year <- max(seq.info$CollectionDate) - 365
+which.new <- which(seq.info$CollectionDate > new.year)
+seq.info <- annotate.new(seq.info,which.new)
+
+predictive.models <- list(
+  "NullModel" = function(x){
+    glm(Growth~Size, data=x, family="poisson")
+  },
+  "TimeModel" = function(x){
+    glm(Growth~Size+CollectionDate, data=x, family="poisson")
+  }
+)
+
+predictor.transformations <- list(
+  "CollectionDate" = function(x){mean(x)}
+)
 
 #### GRAPH TESTING
 edge.info.tn93 <- ape::dist.dna(seqs.full, pairwise.deletion = T, as.matrix = T, model = "TN93", )
@@ -27,13 +39,13 @@ param.list.patristic <- lapply(seq(0,0.08,0.001), function(x){list("g"=g.patrist
 cluster.range.tn93 <- multi.cluster(component.cluster, param.list.tn93, mc.cores = 4)
 cluster.range.patristic <- multi.cluster(component.cluster, param.list.patristic, mc.cores = 4)
 
-res.tn93 <- fit.analysis(cluster.range.tn93)
-res.patristic <- fit.analysis(cluster.range.patristic)
+res.tn93 <- fit.analysis(cluster.data=cluster.range.tn93, predictive.models=predictive.models,
+                         predictor.transformations = predictor.transformations)
+res.tn93 <- cbind(res.tn93, get.AIC(res.tn93))
 
-aicdiff.tn93 <- plot.aic.diff(res.tn93)
-param.list.tn93[[which.min(aicdiff.tn93)]]
-aicdiff.patristic <- plot.aic.diff(res.patristic)
-param.list.patristic[[which.min(aicdiff.patristic)]]
+res.patristic <- fit.analysis(cluster.data=cluster.range.patristic, predictive.models=predictive.models,
+                              predictor.transformations = predictor.transformations)
+res.patristic <- cbind(res.patristic, get.AIC(res.patristic))
 
 #### PPLACER/TREE TESTING
 stats.json.ft.test <- translate.log(log.file = "data/FastTree_LogEx.txt", program = "FastTree")
@@ -50,10 +62,13 @@ clusters.step <- step.cluster(tree.extended, 0.007, 0.3)
 clusters.mono <- mono.pat.cluster(tree.extended, 0.07, 0.3)
 
 param.list <- lapply(seq(0,0.04,0.001), function(x){list("t"=tree.extended, "branch.thresh"=x)})
-cluster.range <- multi.cluster(step.cluster, param.list, mc.cores = 4)
+cluster.data <- multi.cluster(step.cluster, param.list, mc.cores = 4)
 
-res <- fit.analysis(cluster.range)
-plot.aic.diff(res)
+
+res <- fit.analysis(cluster.data,
+                    predictor.transformations = predictor.transformations,
+                    predictive.models=predictive.models)
+res <- cbind(res, get.AIC(res))
 
 
 

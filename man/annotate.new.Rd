@@ -4,7 +4,7 @@
 \alias{annotate.new}
 \title{Define new sequences}
 \usage{
-annotate.new(seq.info, which.new = logical(0))
+annotate.new(seq.info, which.new)
 }
 \arguments{
 \item{seq.info:}{A data frame or data.table object containing the sequence meta data}

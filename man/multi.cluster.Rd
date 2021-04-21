@@ -4,13 +4,7 @@
 \alias{multi.cluster}
 \title{Multiple clusters from a parameter set}
 \usage{
-multi.cluster(
-  cluster.method,
-  param.list,
-  mc.cores = 1,
-  verbose = T,
-  rangeID = 0
-)
+multi.cluster(cluster.method, param.list, mc.cores = 1, rangeID = 0)
 }
 \arguments{
 \item{param.list:}{A named list of parameter sets. Each must correspond to the clustering method used.}

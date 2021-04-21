@@ -2,7 +2,6 @@
 #'
 #' Translates a set of sequence headers into a data.frame object for data input.
 #' NOTE: This must contain, at minimum, a set of unique sequence id's (labelled ID) and one other variable
-#' NOTE: A certain subset of sequences
 #'
 #' @param seqs: An inputted alignment using ape's sequence handling
 #' @param var.names: The names of the variables represented in each header. This must contain "ID".
@@ -56,22 +55,11 @@ pull.headers <- function(seqs, var.names, var.transformations = list(), sep = "_
 #' @param seq.info: A data frame or data.table object containing the sequence meta data
 #' @param which.new: A set of indices of which sequences were to be labelled "new"
 #' @return seq.info annotated with a true/false "New" column
-annotate.new <- function(seq.info, which.new = logical(0)) {
-
+annotate.new <- function(seq.info, which.new) {
 
   # Check inputs
   if ("New" %in% colnames(seq.info)) {
     warning("A column in seq.info is already labelled as New. This will be overwritten")
-  }
-  if (length(which.new) == 0) {
-    warning("No new sequences are specified. By default, a variable labelled Time will be used to specify new cases.
-            This would label cases within the newest year of the time range as new")
-    if ("Time" %in% colnames(seq.info)) {
-      new.year <- max(seq.info$Time) - 365
-      which.new <- which(seq.info$Time > new.year)
-    } else {
-      stop("No time variable clarified.")
-    }
   }
 
   # Annotate New
