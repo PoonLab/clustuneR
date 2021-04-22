@@ -3,14 +3,29 @@ Title: Molecular clustering implementation and predictive optimization
 Version: 0.0.0.9000
 Authors@R: 
   person(given = "Connor", family = "Chato", role = c("aut", "cre"), email = "ConnorChato@gmail.com")
-Description: This package can take in a phylogeny or a genetic sequence alignment 
-  using ape's implementation of these objects and group individual sequences into 
-  clusters based on a tree or graph built from their relationships. Given some 
-  specification of "New" sequences, cluster growth can be defined as new sequences
-  joining old clusters. Growth as an outcome can be then be fit to a model and the performance of this model can be used to judge optimal clusters.
+Description: This package can take identify clusters from the ape package's 
+  implementation of tree and sequence data. Multiple common definitions of sequence
+  based clusters are implemented as functions, with a cluster neatly standardized 
+  as a row in a data.table object. This also offers some ability to run and test 
+  predictive models on clustered data sets, tracking the effect of known variables 
+  within clusters (ex. time) on outcomes such as cluster growth over time. Several
+  built in functions handle the measurement and definition of cluster growth for
+  this purpose. Optimal clusters(built under a certain set of parameters) can be
+  identified based on predictive model performance.
 License: `use_gpl3_license()`
 Encoding: UTF-8
-Depends: data.table, ape, dplyr, parallel, jsonlite, digest, phangorn
+Imports: 
+  ape (>= 5.3), 
+  dplyr (>= 0.8.3), 
+  digest (>= 0.6.25),
+  jsonlite (>= 1.7.2),  
+  phangorn (>= 0.7-70)
+Depends: 
+  data.table (>= 1.12.4), 
+  R (>= 3.6.3)
 LazyData: true
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.1.1
+Suggests: 
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3

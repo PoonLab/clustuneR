@@ -25,7 +25,7 @@ pull.headers <- function(seqs, var.names, var.transformations = list(), sep = "_
       return(NULL)
     }
   }
-  if (("Header" %in% var.names)) {
+  if ("Header" %in% var.names) {
     warning("'Header' is contained within var.names, this will be overwritten")
   }
 
@@ -34,6 +34,8 @@ pull.headers <- function(seqs, var.names, var.transformations = list(), sep = "_
   split.headers <- sapply(names(seqs), function(x) {
     strsplit(x, sep)[[1]]
   })
+
+
   seq.info <- lapply(1:nrow(split.headers), function(i) {
     x <- unname(split.headers[i, ])
     x <- var.transformations[[i]](x)

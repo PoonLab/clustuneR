@@ -3,7 +3,6 @@
 #' Create an implementation of a graph. This consists of an edge matrix (see ape::dist.dna()) and some sequence meta data
 #' A large part of this process involves resolving growth, ensuring that new sequences are only added prospectively without merging clusters.
 #' At this point, we also annotate the minimum retrospective edges of each edge. This is stored in sequence information
-#' NOTE: A subset of these sequences are expected to be labelled new.
 #'
 #' @param seq.info: A set of sequence meta-data sorted by alignment header
 #' @param edge.info: A pairwise edge matrix of all associated headers in seq.info
@@ -39,14 +38,17 @@ create.graph <- function(seq.info, edge.info, growth.resolution = minimum.retros
 #' @return A data table matching each new sequence with its closest retrospective neighbour
 minimum.retrospective.edge <- function(g) {
 
-
   # Find the minimum retrospective edge of each sequence
   new.seqs <- g$seq.info[(New), Header]
   old.seqs <- g$seq.info[!(New), Header]
   retro.edges <- g$edge.info[new.seqs, old.seqs]
-  min.retro.edges <- sapply(1:nrow(retro.edges), function(i) {
+  min.retro.edges <- sapply(seq_len(nrow(retro.edges)), function(i) {
     names(which.min(retro.edges[i, ]))
   })
+
+  if(length(min.retro.edges)==0){
+    min.retro.edges <- numeric(0)
+  }
 
   DT <- data.table::data.table(New = new.seqs, Neighbour = min.retro.edges)
 
