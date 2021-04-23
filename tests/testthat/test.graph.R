@@ -1,3 +1,5 @@
+setwd("../../")
+
 source("R/graph.setup.R")
 source("R/graph.clustering.R")
 source("R/analysis.R")

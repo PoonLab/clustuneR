@@ -77,7 +77,7 @@ annotate.nodes <- function(t, mc.cores = 1) {
 
   # Store node info in data.table
   node.info <- data.table::data.table()
-  node.info[, "ID" := nodes]
+  node.info[, "NodeID" := nodes]
   node.info[, "Bootstrap" := c(rep(100, length(t$tip.label)), as.numeric(t$node.label))]
 
   node.info[
@@ -392,6 +392,7 @@ run.pplacer_guppy <- function(refpkg) {
   system(paste0(
     "export LC_ALL=C ; ", "pplacer -c ", refpkg,
     " -o ", refpkg, "/placements.jplace",
+    " --verbosity 0",
     " ", refpkg, "/seq.fasta"
   ))
 

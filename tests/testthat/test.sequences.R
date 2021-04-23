@@ -1,5 +1,9 @@
+setwd("../../")
+
 source("R/sequence.setup.R")
 library(testthat)
+library(ape)
+library(phangorn)
 
 load("data/seq.info_ex.RData")
 load("data/seq-phylo_ex.RData")

@@ -45,11 +45,6 @@ fit.analysis <- function(cluster.data, mc.cores = 1, predictor.transformations =
   if (!all((predictors) %in% colnames(cluster.data))) {
     stop("Predictors referenced in transform step are not in the range of cluster data")
   }
-  if (!("Growth" %in% colnames(cluster.data))) {
-    warning("No Growth information with clusters. This will default to 0 for all clusters.
-            Some other outcome should be specified in your predictive models.")
-    cluster.data[, "Growth" := 0]
-  }
   if (!("RangeID" %in% colnames(cluster.data))) {
     warning("No range ID, by default this will be set to 0 for all sets")
     cluster.data[, "RangeID" := 0]
@@ -73,7 +68,9 @@ fit.analysis <- function(cluster.data, mc.cores = 1, predictor.transformations =
       DT <- model.data[SetID == id, ]
 
       res <- data.table::data.table("SetID" = DT[1, SetID], "RangeID" = DT[1, RangeID])
-      res[, (mod.names) := lapply(predictive.models, function(pmod){suppressWarnings(list(pmod(DT)))})]
+      res[, (mod.names) := lapply(predictive.models, function(pmod){
+        suppressWarnings(list(pmod(DT)))
+      })]
       return(res)
     }, mc.cores = mc.cores)
   )

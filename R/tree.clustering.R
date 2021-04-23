@@ -51,7 +51,7 @@ step.cluster <- function(t, branch.thresh = 0.007, boot.thresh = 0, setID = 0) {
     list(get(nm))
   }), by = Cluster]
   cluster.set <- cluster.set[order(Cluster), ]
-  des <- t$node.info[Cluster %in% cluster.set$Cluster, list(.(ID)), by = Cluster]
+  des <- t$node.info[Cluster %in% cluster.set$Cluster, list(.(NodeID)), by = Cluster]
   des <- des[order(Cluster), ]
   cluster.set[, "Descendants" := des$V1]
   cluster.set[, "Size" := length(V1[[1]]), by = 1:nrow(cluster.set)]
@@ -82,12 +82,10 @@ step.cluster <- function(t, branch.thresh = 0.007, boot.thresh = 0, setID = 0) {
 
 
 ## - TO-DO: SOLVE MONOPHYLETIC CLUSTER GROWTH IN A SIMPLE WAY -##
-## - TO-DO: Update Header info-##
 #' Obtain clusters based on a monophyletic group in tree
 #'
 #' Clusters as a monophyletic clade under a high-confidence common ancestor.
 #' The pairwise patristic distances in this clade must all
-#' NOTE: Running this method requires a tree object with growth.info defined
 #'
 #' @param t: The input tree file, annotated with vertex and edge information
 #' @param dist.criterion: A particular column in node.info that must be less than a distance threshold
@@ -95,7 +93,9 @@ step.cluster <- function(t, branch.thresh = 0.007, boot.thresh = 0, setID = 0) {
 #' @param setID: If several different parameter ranges are used, the setID can identify them.
 #' @param boot.thresh: The minimum bootstrap criterion defining clusters
 #' @return A data table which extends a subset of node.info. This includes growth info
-mono.pat.cluster <- function(t, dist.thresh, boot.thresh = 0, dist.criterion = "max.patristic.dist", verbose = T, setID = 0) {
+mono.pat.cluster <- function(t, dist.thresh, boot.thresh = 0, dist.criterion = "max.patristic.dist", setID = 0) {
+
+  warning("Method unfinished. Growth information for clusters not included")
 
   # Input Checking
   if (!is.numeric(dist.thresh) | !is.numeric(boot.thresh)) {
@@ -110,11 +110,9 @@ mono.pat.cluster <- function(t, dist.thresh, boot.thresh = 0, dist.criterion = "
   t$node.info[(Bootstrap >= boot.thresh) & (get(dist.criterion) <= dist.thresh), "Clustered" := T]
   clustered.des <- unlist(t$node.info[(Clustered), Descendants])
 
-  times.clustered <- t$node.info[(Clustered), length(which(clustered.des %in% ID)), by = which(Clustered)]
+  times.clustered <- t$node.info[(Clustered), length(which(clustered.des %in% NodeID)), by = which(Clustered)]
   sub.clusters <- times.clustered[((which <= length(t$tip.label)) & (V1 > 1)) | ((which > length(t$tip.label)) & (V1 > 0)), which]
   t$node.info[sub.clusters, "Clustered" := F]
-
-  cluster.set <- t$node.info[(Clustered), ]
 
   # Find parent clusters
   t$node.info[, "Cluster" := 0]
@@ -122,16 +120,23 @@ mono.pat.cluster <- function(t, dist.thresh, boot.thresh = 0, dist.criterion = "
     t$node.info[i, "Cluster" := i]
     t$node.info[t$node.info$Descendants[[i]], "Cluster" := i]
   }
+  t$seq.info[, "Cluster" := 0]
+  t$seq.info[!(New), Cluster := t$node.info[1:length(t$tip.label), Cluster]]
 
-  ## - TO-DO: SOLVE MONOPHYLETIC CLUSTER GROWTH IN A SIMPLE WAY -##
-  warning("Method unfinished. Growth information for clusters not included")
+  seq.cols <- colnames(t$seq.info)
+  cluster.set <- t$seq.info[!(New), lapply(seq.cols, function(nm) {
+    list(get(nm))
+  }), by = Cluster]
+  cluster.set[, "Size" := length(V1[[1]]), by = 1:nrow(cluster.set)]
+  colnames(cluster.set) <- c("ClusterID", seq.cols, "Size")
+  cluster.set$New <- NULL
 
   # Attach growth info and a set ID to clusters
-  cluster.set[, "Growth" := NA]
+  cluster.set[, "Growth" := 0]
 
   cluster.set[, "DistThresh" := dist.thresh]
   cluster.set[, "BootThresh" := boot.thresh]
-  cluster.set[, "setID" := setID]
+  cluster.set[, "SetID" := setID]
 
   return(cluster.set)
 }
