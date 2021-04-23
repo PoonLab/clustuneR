@@ -15,10 +15,6 @@ step.cluster <- function(t, branch.thresh = 0.007, boot.thresh = 0, setID = 0) {
   if (!is.numeric(branch.thresh) | !is.numeric(boot.thresh)) {
     stop("Clustering criteria must be numeric values")
   }
-  if (branch.thresh < 0 | boot.thresh < 0 | boot.thresh > 1) {
-    warning("Bootstrap criterion should be from 0-1 and
-            branch length criterion should be positive.")
-  }
   if (!("path.info" %in% names(t))) {
     stop("path.info must be defined for tree")
   }
@@ -67,7 +63,9 @@ step.cluster <- function(t, branch.thresh = 0.007, boot.thresh = 0, setID = 0) {
   t$growth.info[(TermDistance) <= branch.thresh, Cluster := NA]
 
   growth <- t$growth.info[!is.na(Cluster), sum(Bootstrap), by = .(Header, Cluster)]
-  growth <- growth[V1 >= boot.thresh, Cluster[which.max(V1)], by = .(Header)]
+  if(length(growth)>0){
+    growth <- growth[V1 >= boot.thresh, Cluster[which.max(V1)], by = .(Header)]
+  }
   growth <- table(growth$V1)
   growth <- growth[which(as.numeric(names(growth)) %in% cluster.set$ClusterID)]
 
@@ -94,7 +92,6 @@ step.cluster <- function(t, branch.thresh = 0.007, boot.thresh = 0, setID = 0) {
 #' @param t: The input tree file, annotated with vertex and edge information
 #' @param dist.criterion: A particular column in node.info that must be less than a distance threshold
 #' @param dist.thresh: The threshold required for clustering.
-#' @param verbose: An output monitoring option
 #' @param setID: If several different parameter ranges are used, the setID can identify them.
 #' @param boot.thresh: The minimum bootstrap criterion defining clusters
 #' @return A data table which extends a subset of node.info. This includes growth info
@@ -103,10 +100,6 @@ mono.pat.cluster <- function(t, dist.thresh, boot.thresh = 0, dist.criterion = "
   # Input Checking
   if (!is.numeric(dist.thresh) | !is.numeric(boot.thresh)) {
     stop("Clustering criteria must be numeric values")
-  }
-  if (dist.thresh < 0 | boot.thresh < 0 | boot.thresh > 1) {
-    warning("Bootstrap criterion should be from 0-1 and
-            branch length criterion should be positive.")
   }
   if (!("growth.info" %in% names(t))) {
     stop("growth.info must be defined for tree")
@@ -131,9 +124,7 @@ mono.pat.cluster <- function(t, dist.thresh, boot.thresh = 0, dist.criterion = "
   }
 
   ## - TO-DO: SOLVE MONOPHYLETIC CLUSTER GROWTH IN A SIMPLE WAY -##
-  if (verbose) {
-    warning("Method unfinished. Growth information for clusters not included")
-  }
+  warning("Method unfinished. Growth information for clusters not included")
 
   # Attach growth info and a set ID to clusters
   cluster.set[, "Growth" := NA]
@@ -144,3 +135,5 @@ mono.pat.cluster <- function(t, dist.thresh, boot.thresh = 0, dist.criterion = "
 
   return(cluster.set)
 }
+
+

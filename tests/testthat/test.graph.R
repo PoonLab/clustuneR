@@ -4,6 +4,7 @@ source("R/analysis.R")
 library(testthat)
 library(ape)
 
+load("data/seq-phylo_ex.RData")
 load("data/seq.info_ex.RData")
 load("data/graphs_ex.RData")
 
