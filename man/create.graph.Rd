@@ -2,11 +2,12 @@
 % Please edit documentation in R/graph.setup.R
 \name{create.graph}
 \alias{create.graph}
-\title{Makes a graph object based on sequence data}
+\title{Makes a graph object based on sequence data and pairwise comparisons}
 \usage{
 create.graph(
   seq.info,
   edge.info,
+  which.new = numeric(0),
   growth.resolution = minimum.retrospective.edge
 )
 }
@@ -15,14 +16,28 @@ create.graph(
 
 \item{edge.info:}{A pairwise edge matrix of all associated headers in seq.info}
 
+\item{which.new:}{A set of indices of which sequences were to be labelled "new". this labels certain}
+
 \item{growth.resolution:}{The method by which growth is resolved. This ensures new cases don't merge clusters
-By default, each new sequence joins a cluster byonly it's minimum retrospective}
+By default, each new sequence joins a cluster by only it's minimum retrospective}
 }
 \value{
 A graph, with sequences and edge info. New sequences are only linked by their minimum retrospective edge
 }
 \description{
-Create an implementation of a graph. This consists of an edge matrix (see ape::dist.dna()) and some sequence meta data
+Create an implementation of a graph. This is a list, consisting of a distance matrix and some sequence meta data (seq.info)
 A large part of this process involves resolving growth, ensuring that new sequences are only added prospectively without merging clusters.
 At this point, we also annotate the minimum retrospective edges of each edge. This is stored in sequence information
+NOTE: Other growth resolutions may be possible such as random joining, or partial joining, however, these are not currently
+investigated or implemented
+}
+\examples{
+load("data/seq-phylo_ex.RData")
+load("data/seq.info_ex.RData")
+
+edge.info <- ape::dist.dna(seqs.full, pairwise.deletion = T, as.matrix = T, model = "TN93", )
+
+new.year <- max(seq.info$CollectionDate) - 365
+which.new <- which(seq.info$CollectionDate > new.year)
+g <- create.graph(seq.info, edge.info, which.new)
 }

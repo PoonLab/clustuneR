@@ -1,15 +1,19 @@
-#' Makes a graph object based on sequence data
+#' Makes a graph object based on sequence data and pairwise comparisons
 #'
-#' Create an implementation of a graph. This consists of an edge matrix (see ape::dist.dna()) and some sequence meta data
+#' Create an implementation of a graph. This is a list, consisting of a distance matrix and some sequence meta data (seq.info)
 #' A large part of this process involves resolving growth, ensuring that new sequences are only added prospectively without merging clusters.
 #' At this point, we also annotate the minimum retrospective edges of each edge. This is stored in sequence information
+#' NOTE: Other growth resolutions may be possible such as random joining, or partial joining, however, these are not currently
+#' investigated or implemented
 #'
 #' @param seq.info: A set of sequence meta-data sorted by alignment header
 #' @param edge.info: A pairwise edge matrix of all associated headers in seq.info
 #' @param which.new: A set of indices of which sequences were to be labelled "new". this labels certain
 #' @param growth.resolution: The method by which growth is resolved. This ensures new cases don't merge clusters
-#' By default, each new sequence joins a cluster byonly it's minimum retrospective
+#' By default, each new sequence joins a cluster by only it's minimum retrospective
 #' @return A graph, with sequences and edge info. New sequences are only linked by their minimum retrospective edge
+#' @export
+#' @example examples/create.graph_ex.R
 create.graph <- function(seq.info, edge.info, which.new=numeric(0), growth.resolution = minimum.retrospective.edge) {
 
   # Check inputs
@@ -30,7 +34,6 @@ create.graph <- function(seq.info, edge.info, which.new=numeric(0), growth.resol
   return(g)
 }
 
-##- TO-DO: Hide helpers from user -##
 #' A growth resolution helper.
 #'
 #' Ensures that new sequences only join old clusters through their minimum, retrospective edge

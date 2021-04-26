@@ -3,13 +3,11 @@
 #'This is partially intended as example use code, however may also act as secondary,
 #'informal testing in the development cycle and as a tool to update data quickly if required.
 generate.all <- function() {
-
   generate.seq.info()
   generate.graphs()
   generate.trees()
   generate.clusters()
   generate.fit.results()
-
 }
 
 #' Obtain basic sequence information
@@ -88,18 +86,9 @@ generate.fit.results <- function() {
     "CollectionDate" = function(x){mean(x)}
   )
 
-  param.list.boot <- lapply(seq(0,0.04,0.001), function(x){list("t"=t.growing, "branch.thresh"=x, "boot.thresh"=0.9)})
-  param.list.noboot <- lapply(seq(0,0.04,0.001), function(x){list("t"=t.growing, "branch.thresh"=x)})
-
-  step.cluster.data.boot <- multi.cluster(step.cluster, param.list.boot, mc.cores = 1)
-  step.cluster.data.noboot <- multi.cluster(step.cluster, param.list.noboot, mc.cores = 1)
-
-  res.step.boot <- fit.analysis(step.cluster.data.boot,
+  fit.result <- fit.analysis(component.cluster.data,
                                 predictor.transformations = predictor.transformations,
                                 predictive.models=predictive.models)
-  res.step.noboot <- fit.analysis(step.cluster.data.noboot,
-                                  predictor.transformations = predictor.transformations,
-                                  predictive.models=predictive.models)
 
-  save(list=c("res.step.boot", "res.step.noboot"), file="data/fit.results_ex.RData")
+  save("fit.result", file="data/fit.results_ex.RData")
 }

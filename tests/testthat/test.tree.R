@@ -29,10 +29,6 @@ test_that("Tree can be extended with new seqs to represent growth", {
                            log.file = "data/IQTREE_log_ex.txt"), NA)
 })
 
-test_that("FastTree Logfiles can be recognized and translated", {
-  expect_silent(translate.log("data/FastTree_log_ex.txt"))
-})
-
 test_that("IQ-TREE  Logfiles can be recognized and translated", {
   expect_silent(translate.log("data/IQTREE_log_ex.txt"))
 })

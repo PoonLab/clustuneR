@@ -1,14 +1,15 @@
 #' Obtain clusters based on path to ancestor in tree
 #'
 #' Clusters are defined as a series of tips diverging from A high confidence common ancestor.
-#' This divergence must be done Through a series of short branches.
-#' NOTE: Running this method requires a tree object with growth.info and path.info defined
+#' This divergence must be done through a series of short branches, which the branch.thresh constrains.
 #'
 #' @param t: The input tree file, annotated with vertex and edge information
-#' @param step.thresh: The maximum branch length criterion defining clusters
+#' @param branch.thresh: The maximum branch length criterion defining clusters
 #' @param boot.thresh: The minimum bootstrap criterion defining clusters
 #' @param setID: If several different parameter ranges are used, the setID can identify them
 #' @return A data table which extends a subset of node.info. This includes growth info
+#' @export
+#' @example examples/step.cluster_ex.R
 step.cluster <- function(t, branch.thresh = 0.007, boot.thresh = 0, setID = 0) {
 
   # Input Checking

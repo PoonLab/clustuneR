@@ -21,3 +21,7 @@ Because data.tables are being used, this prevents original values being reassign
 This uses a homogenization algorithm to identify disconnected components in a graph.
 Edges are filtered away using a distance threshold to result in components.
 }
+\examples{
+load("data/graph_ex.RData")
+component.cluster.set <- component.cluster(g, dist.thresh = 0.015)
+}

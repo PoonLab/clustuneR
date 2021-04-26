@@ -8,8 +8,9 @@
 #' @param setID: If several different parameter ranges are used, the setID can identify them
 #' @return A data table which represents cluster information. This includes growth info
 #' Because data.tables are being used, this prevents original values being reassigned via pointer
+#' @export
+#' @example examples/component.cluster_ex.R
 component.cluster <- function(g, dist.thresh = 0.007, setID = 0) {
-
 
   # Filter edges above the distance threshold and prepare for component finding algorithm
   # All edges from a new sequence are filtered except for their "growth-resolved" edge

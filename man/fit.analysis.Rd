@@ -31,3 +31,23 @@ A data.table of analysis results. Several important summary values such as null 
 Fits a predictive model of some outcome (by default, cluster growth) to sets of cluster data.
 These fits are recorded for each use of the predictive model on a given cluster set
 }
+\examples{
+load("data/clusters_ex.RData")
+
+predictive.models <- list(
+  "NullModel" = function(x){
+    glm(Growth~Size, data=x, family="poisson")
+  },
+  "TimeModel" = function(x){
+    glm(Growth~Size+CollectionDate, data=x, family="poisson")
+  }
+)
+
+predictor.transformations <- list(
+  "CollectionDate" = function(x){mean(x)}
+)
+
+fit.result <- fit.analysis(component.cluster.data,
+                           predictor.transformations = predictor.transformations,
+                           predictive.models=predictive.models)
+}

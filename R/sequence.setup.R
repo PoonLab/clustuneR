@@ -10,9 +10,7 @@
 #' @param sep: The separator character that splits upthe headers in the fasta file
 #' @return A data.table object containing the information associated with each sequence.
 #' @export
-#' @examples
-#' load("data/seq-phylo_ex.RData")
-#' seq.info <- pull.headers(seqs.full,var.names = c("ID", "CollectionDate", "Subtype"),var.transformations =list(as.character, as.Date, as.factor))
+#' @example examples/pull.headers_ex.R
 pull.headers <- function(seqs, var.names, var.transformations = list(), sep = "_") {
 
   # Checking Inputs
@@ -52,24 +50,4 @@ pull.headers <- function(seqs, var.names, var.transformations = list(), sep = "_
   seq.info[, "Header" := names(seqs)]
 
   return(seq.info)
-}
-
-#' Obtain "old" sequences
-#'
-#' Get a subset of sequences from an ape seq object based on seq.info data which is not labeled new
-#'
-#' @param seqs: A full alignment
-#' @param seq.info: A set of seq.info. If provided, may be used to ascertain old sequences from new
-#' A tree is generally only to be built from old sequences
-#' @return Filtered sequences, an ape seq object
-get.old.seqs <- function(seqs, seq.info) {
-
-  # Check new sequences, filter if given
-  if ("New" %in% colnames(seq.info)) {
-    stop("No new info given in seq.info")
-  } else {
-    seqs <- seqs[which(names(seqs) %in% seq.info[!(New), Header])]
-  }
-
-  return(seqs)
 }

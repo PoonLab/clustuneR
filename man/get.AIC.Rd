@@ -16,3 +16,9 @@ The AIC data for all columns containing fit objects
 Takes a cluster.analysis and extracts AIC values from columns containing model fits.
 Model fit columns are automatically identified
 }
+\examples{
+load("data/fit.results_ex.RData")
+DT <- get.AIC(fit.result)
+aicdiff <- DT$TimeModelAIC-DT$NullModelAIC
+which.min(aicdiff)
+}

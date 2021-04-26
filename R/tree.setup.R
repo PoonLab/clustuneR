@@ -10,6 +10,8 @@
 #' @param seqs.full: The full alignment. Including sequences excluded from the tree.
 #' @param mc.cores: Passed to annotate.nodes as a parallel option
 #' @return The tree annotated with node information and seq.info
+#' @export
+#' @example examples/extend.tree_ex.R
 extend.tree <- function(t, seq.info, mc.cores = 1, log.file=NA, full.align=character(0), locus = "LOCUS") {
 
   # Root the tree (if unrooted) and resolve multichotomies
@@ -62,7 +64,6 @@ extend.tree <- function(t, seq.info, mc.cores = 1, log.file=NA, full.align=chara
   return(t)
 }
 
-##-TO-DO: Mask from user
 #' Prepare nodes in tree for clustering
 #'
 #' Called by extend.tree. Adds additional node info to the tree. Required for mono.cluster()
@@ -108,7 +109,6 @@ annotate.nodes <- function(t, mc.cores = 1) {
   return(node.info)
 }
 
-##-TO-DO: Mask from user
 #' Get paths relative to starting nodes
 #'
 #' Called by extend.tree. Adds path info to the tree. Required for step.cluster()
@@ -234,8 +234,6 @@ annotate.growth <- function(t, t.grown, mc.cores = 1) {
   return(growth.info)
 }
 
-##- TO-DO: Make this masked from user -##
-##- TO-DO: Automatically identify program -##
 #' Build a stats.json
 #'
 #' Parses the logfile output of tree building software to find information relevant to pplacer.
@@ -310,7 +308,6 @@ translate.log <- function(log.file) {
   return(stats.json)
 }
 
-##- TO-DO: Less direct user interaction? -##
 #' Create a refpkg
 #'
 #' A wrapper for the taxit create function used by pplacer. This will generate a summary json
