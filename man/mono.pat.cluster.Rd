@@ -9,7 +9,6 @@ mono.pat.cluster(
   dist.thresh,
   boot.thresh = 0,
   dist.criterion = "max.patristic.dist",
-  verbose = T,
   setID = 0
 )
 }
@@ -19,8 +18,6 @@ mono.pat.cluster(
 \item{dist.criterion:}{A particular column in node.info that must be less than a distance threshold}
 
 \item{dist.thresh:}{The threshold required for clustering.}
-
-\item{verbose:}{An output monitoring option}
 
 \item{setID:}{If several different parameter ranges are used, the setID can identify them.}
 
@@ -32,5 +29,4 @@ A data table which extends a subset of node.info. This includes growth info
 \description{
 Clusters as a monophyletic clade under a high-confidence common ancestor.
 The pairwise patristic distances in this clade must all
-NOTE: Running this method requires a tree object with growth.info defined
 }

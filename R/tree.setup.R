@@ -31,7 +31,10 @@ extend.tree <- function(t, seq.info, mc.cores = 1, log.file=NA, full.align=chara
       stop("At least 1 tip labels in tree is not represent seq.labels")
     }
   }
-  seq.info <- annotate.new(seq.info, which(!(seq.info$Header %in% t$tip.label)))
+  which.new <- which(!(seq.info$Header %in% t$tip.label))
+  seq.info[,"New":=F]
+  seq.info[which.new,"New":=T]
+
   t$seq.info <- seq.info
 
   t$node.info <- annotate.nodes(t, mc.cores)

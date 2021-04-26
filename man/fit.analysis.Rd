@@ -2,7 +2,7 @@
 % Please edit documentation in R/analysis.R
 \name{fit.analysis}
 \alias{fit.analysis}
-\title{Predictive analysis on a range of cluster sets}
+\title{Predictive analysis on clusters}
 \usage{
 fit.analysis(
   cluster.data,
@@ -13,19 +13,21 @@ fit.analysis(
 )
 }
 \arguments{
-\item{cluster.data:}{Inputted set(s) of cluster data. May or may not be sorted into ranges}
+\item{cluster.data:}{Inputted set(s) of clusters May or may not be sorted into ranges}
 
-\item{mc.cores:}{A parallel option}
+\item{mc.cores:}{A parallel option to increase run speed}
 
 \item{predictor.transformations:}{A named list of transformation functions for each predictor variable.
-This name should correspond to a column from the cluster.data, which will be taken as input for the function}
+This name should correspond to a column from the cluster.data, which will be taken as input for the function.
+for example list("CollectionDate"=mean), would change the collection date column to a vector of means
+instead of a list collection date vectors}
 
 \item{predictive.models:}{A named list of functions, each of which applies a model to inputted data (x). See default null for example.}
 }
 \value{
-A data.table of analysis results. Several important summary values such as null and full AIC are proposed here
+A data.table of analysis results. Several important summary values such as null and full AIC are proposed here.
 }
 \description{
 Fits a predictive model of some outcome (by default, cluster growth) to sets of cluster data.
-This fit measurement is recorded for each use of the predictive model on a given cluister set
+These fits are recorded for each use of the predictive model on a given cluster set
 }

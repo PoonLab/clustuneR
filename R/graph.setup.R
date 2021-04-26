@@ -6,24 +6,25 @@
 #'
 #' @param seq.info: A set of sequence meta-data sorted by alignment header
 #' @param edge.info: A pairwise edge matrix of all associated headers in seq.info
+#' @param which.new: A set of indices of which sequences were to be labelled "new". this labels certain
 #' @param growth.resolution: The method by which growth is resolved. This ensures new cases don't merge clusters
 #' By default, each new sequence joins a cluster byonly it's minimum retrospective
 #' @return A graph, with sequences and edge info. New sequences are only linked by their minimum retrospective edge
-create.graph <- function(seq.info, edge.info, growth.resolution = minimum.retrospective.edge) {
+create.graph <- function(seq.info, edge.info, which.new=numeric(0), growth.resolution = minimum.retrospective.edge) {
 
   # Check inputs
   if (!all(colnames(edge.info) %in% colnames(edge.info))) {
     stop("The pairwise distance matrix does not contain the recognized headers")
-  }
-  if (!("New" %in% colnames(seq.info))) {
-    warning("No new sequences are specified by a New column in seq.info.")
-    seq.info[, "New" := F]
   }
 
   # Assemble graph object
   g <- list()
   g$seq.info <- seq.info
   g$edge.info <- edge.info
+
+  g$seq.info[,"New" := F]
+  g$seq.info[which.new,"New" := T]
+
   g$growth.resolved <- growth.resolution(g)
 
   return(g)

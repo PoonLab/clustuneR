@@ -4,7 +4,14 @@
 \alias{extend.tree}
 \title{Prepare a tree for clustering}
 \usage{
-extend.tree(t, seq.info, paths.annotated = T, mc.cores = 1)
+extend.tree(
+  t,
+  seq.info,
+  mc.cores = 1,
+  log.file = NA,
+  full.align = character(0),
+  locus = "LOCUS"
+)
 }
 \arguments{
 \item{t:}{An inputted tree using ape's tree handling}
@@ -12,14 +19,16 @@ extend.tree(t, seq.info, paths.annotated = T, mc.cores = 1)
 \item{seq.info:}{A data frame or data.table object containing the sequences.
 By default, new sequences are assigned as those not in the tree.}
 
-\item{mc.cores:}{Passed to annotate.nodes as a parallel option}
+\item{log.file:}{A path to the logfile from a tree construction run}
 
-\item{paths.annotated:}{An option to add path info for the tree. Useful for some tree-based clustering methods}
+\item{seqs.full:}{The full alignment. Including sequences excluded from the tree.}
+
+\item{mc.cores:}{Passed to annotate.nodes as a parallel option}
 }
 \value{
 The tree annotated with node information and seq.info
 }
 \description{
 Extends an ape tree object to include annotated node and path information.
-By default this will include some basic node info like bootstraps. Other annotations are optional.
+By default this will include some additional info like paths, bootstraps and growth.
 }

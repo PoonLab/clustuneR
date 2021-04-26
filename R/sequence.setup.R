@@ -9,6 +9,10 @@
 #' these transform each row into it's proper type. by default, each type is set to character.
 #' @param sep: The separator character that splits upthe headers in the fasta file
 #' @return A data.table object containing the information associated with each sequence.
+#' @export
+#' @examples
+#' load("data/seq-phylo_ex.RData")
+#' seq.info <- pull.headers(seqs.full,var.names = c("ID", "CollectionDate", "Subtype"),var.transformations =list(as.character, as.Date, as.factor))
 pull.headers <- function(seqs, var.names, var.transformations = list(), sep = "_") {
 
   # Checking Inputs
@@ -46,27 +50,6 @@ pull.headers <- function(seqs, var.names, var.transformations = list(), sep = "_
   colnames(seq.info) <- var.names
 
   seq.info[, "Header" := names(seqs)]
-
-  return(seq.info)
-}
-
-#' Define new sequences
-#'
-#' Annotate a subset of sequences as "New". This creates an additional column in seq.info
-#'
-#' @param seq.info: A data frame or data.table object containing the sequence meta data
-#' @param which.new: A set of indices of which sequences were to be labelled "new"
-#' @return seq.info annotated with a true/false "New" column
-annotate.new <- function(seq.info, which.new) {
-
-  # Check inputs
-  if ("New" %in% colnames(seq.info)) {
-    warning("A column in seq.info is already labelled as New. This will be overwritten")
-  }
-
-  # Annotate New
-  seq.info[, "New" := F]
-  seq.info[which.new, "New" := T]
 
   return(seq.info)
 }
