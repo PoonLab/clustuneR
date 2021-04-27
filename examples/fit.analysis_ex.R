@@ -1,18 +1,6 @@
-load("data/clusters_ex.RData")
+cluster.data <- cluster.ex
+cluster.data[,"RangeID":=0]
 
-predictive.models <- list(
-  "NullModel" = function(x){
-    glm(Growth~Size, data=x, family="poisson")
-  },
-  "TimeModel" = function(x){
-    glm(Growth~Size+CollectionDate, data=x, family="poisson")
-  }
-)
+fit.result <- fit.analysis(cluster.data)
 
-predictor.transformations <- list(
-  "CollectionDate" = function(x){mean(x)}
-)
-
-fit.result <- fit.analysis(component.cluster.data,
-                           predictor.transformations = predictor.transformations,
-                           predictive.models=predictive.models)
+mod.performance <- fit.result$NullModel

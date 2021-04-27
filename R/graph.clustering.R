@@ -15,17 +15,14 @@ component.cluster <- function(g, dist.thresh = 0.007, setID = 0) {
   # Filter edges above the distance threshold and prepare for component finding algorithm
   # All edges from a new sequence are filtered except for their "growth-resolved" edge
   filtered.edges <- g$edge.info <= dist.thresh
-  sum(filtered.edges)
   filtered.edges[which(g$seq.info$New), ] <- F
-  sum(filtered.edges)
-  filtered.edges[g$growth.resolved$NewID, g$growth.resolved$Neighbour] <-
-    g$edge.info[g$growth.resolved$NewID, g$growth.resolved$Neighbour] <= dist.thresh
-  sum(filtered.edges)
+  filtered.edges[g$growth.resolved$NewHeader, g$growth.resolved$OldHeader] <-
+    g$edge.info[g$growth.resolved$NewHeader, g$growth.resolved$OldHeader] <= dist.thresh
 
   # Run homogenization algorithm to label sequences with their cluster
   seq.cols <- colnames(g$seq.info)
-  previous.cluster <- rep(0, nrow(seq.info))
-  g$seq.info[, "Cluster" := 1:nrow(seq.info)]
+  previous.cluster <- rep(0, nrow(g$seq.info))
+  g$seq.info[, "Cluster" := 1:nrow(g$seq.info)]
 
   while (all(g$seq.info$Cluster != previous.cluster)) {
     previous.cluster <- g$seq.info$Cluster

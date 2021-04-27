@@ -1,2 +1,3 @@
-load("data/graph_ex.RData")
-component.cluster.set <- component.cluster(g, dist.thresh = 0.015)
+component.cluster.set <- component.cluster(graph.ex, dist.thresh = 0.06)
+
+component.cluster.set[which.max(Size),]

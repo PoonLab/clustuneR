@@ -32,12 +32,11 @@ NOTE: Other growth resolutions may be possible such as random joining, or partia
 investigated or implemented
 }
 \examples{
-load("data/seq-phylo_ex.RData")
-load("data/seq.info_ex.RData")
+edge.info <- ape::dist.dna(alignment.ex, pairwise.deletion = T, as.matrix = T, model = "TN93", )
 
-edge.info <- ape::dist.dna(seqs.full, pairwise.deletion = T, as.matrix = T, model = "TN93", )
+new.year <- max(seq.info.ex$CollectionDate) - 365
+which.new <- which(seq.info.ex$CollectionDate > new.year)
+g <- create.graph(seq.info.ex, edge.info, which.new)
 
-new.year <- max(seq.info$CollectionDate) - 365
-which.new <- which(seq.info$CollectionDate > new.year)
-g <- create.graph(seq.info, edge.info, which.new)
+component.cluster(g)
 }

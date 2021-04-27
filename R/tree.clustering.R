@@ -10,7 +10,7 @@
 #' @return A data table which extends a subset of node.info. This includes growth info
 #' @export
 #' @example examples/step.cluster_ex.R
-step.cluster <- function(t, branch.thresh = 0.007, boot.thresh = 0, setID = 0) {
+step.cluster <- function(t, branch.thresh = 0.03, boot.thresh = 0, setID = 0) {
 
   # Input Checking
   if (!is.numeric(branch.thresh) | !is.numeric(boot.thresh)) {
@@ -61,7 +61,7 @@ step.cluster <- function(t, branch.thresh = 0.007, boot.thresh = 0, setID = 0) {
 
   # Assign growth cases to clusters, summing certainty for each
   t$growth.info[, "Cluster" := t$node.info[t$growth.info$NeighbourNode, Cluster]]
-  t$growth.info[(TermDistance) <= branch.thresh, Cluster := NA]
+  t$growth.info[(TermDistance) >= branch.thresh, Cluster := NA]
 
   growth <- t$growth.info[!is.na(Cluster), sum(Bootstrap), by = .(Header, Cluster)]
   if(length(growth)>0){

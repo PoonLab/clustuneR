@@ -1,4 +1,5 @@
-load("data/seq-phylo_ex.RData")
-load("data/seq.info_ex.RData")
+t <- extend.tree(old.tree.ex, seq.info.ex,
+                 full.align = alignment.ex,
+                 log.file = "data/IQTREE_log_ex.txt")
 
-t <- extend.tree(tree.old, seq.info, full.align = seqs.full, log.file = "data/IQTREE_log_ex.txt")
+step.cluster(t)

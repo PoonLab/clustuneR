@@ -145,7 +145,7 @@ annotate.paths <- function(t) {
   }) == 0)]
   paths <- paths[order(as.numeric(names(paths)))]
   lens <- lapply(paths, function(x) {
-    c((lens[x[-1]] - lens[x[-length(x)]]), NA)
+    c(NA, (lens[x[-1]] - lens[x[-length(x)]]))
   })
 
   # Obtain bootstrap branchlength and node number information for all paths

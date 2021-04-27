@@ -4,7 +4,7 @@
 \alias{step.cluster}
 \title{Obtain clusters based on path to ancestor in tree}
 \usage{
-step.cluster(t, branch.thresh = 0.007, boot.thresh = 0, setID = 0)
+step.cluster(t, branch.thresh = 0.03, boot.thresh = 0, setID = 0)
 }
 \arguments{
 \item{t:}{The input tree file, annotated with vertex and edge information}
@@ -23,7 +23,7 @@ Clusters are defined as a series of tips diverging from A high confidence common
 This divergence must be done through a series of short branches, which the branch.thresh constrains.
 }
 \examples{
-load("data/tree_ex.RData")
+step.cluster.set <- step.cluster(extended.tree.ex, branch.thresh = 0.03, boot.thresh = 0)
 
-step.cluster.set <- step.cluster(t, branch.thresh = 0.007, boot.thresh = 0.90)
+step.cluster.set[which.max(Size), ]
 }

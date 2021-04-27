@@ -54,7 +54,7 @@ minimum.retrospective.edge <- function(g) {
     min.retro.edges <- numeric(0)
   }
 
-  DT <- data.table::data.table(New = new.seqs, Neighbour = min.retro.edges)
+  DT <- data.table("NewHeader" = new.seqs, "OldHeader" = min.retro.edges)
 
   return(DT)
 }

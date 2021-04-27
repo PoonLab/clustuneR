@@ -24,8 +24,6 @@ Translates a set of sequence headers into a data.frame object for data input.
 NOTE: This must contain, at minimum, a set of unique sequence id's (labelled ID) and one other variable
 }
 \examples{
-load("data/seq-phylo_ex.RData")
-
-seq.info <- pull.headers(seqs.full,var.names = c("ID", "CollectionDate", "Subtype"),
+seq.info <- pull.headers(alignment.ex, var.names = c("ID", "CollectionDate", "Subtype"),
                          var.transformations =list(as.character, as.Date, as.factor))
 }

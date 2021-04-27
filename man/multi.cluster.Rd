@@ -24,12 +24,9 @@ Runs a given clustering method over a range of parameters values to output
 a range of cluster sets corresponding to different
 }
 \examples{
-source("R/tree.clustering.R")
-load("data/tree_ex.RData")
-
 param.list.boot <- lapply(c(0.005,0.01), function(x){
-  list("t"=t, "branch.thresh"=x, "boot.thresh"=0.9)
+  list("t"=extended.tree.ex, "branch.thresh"=x, "boot.thresh"=0.7)
 })
 
-step.cluster.data.boot <- multi.cluster(step.cluster, param.list.boot, mc.cores = 1)
+step.cluster.range <- multi.cluster(step.cluster, param.list.boot, mc.cores = 1)
 }

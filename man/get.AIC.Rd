@@ -17,8 +17,27 @@ Takes a cluster.analysis and extracts AIC values from columns containing model f
 Model fit columns are automatically identified
 }
 \examples{
-load("data/fit.results_ex.RData")
-DT <- get.AIC(fit.result)
-aicdiff <- DT$TimeModelAIC-DT$NullModelAIC
+predictive.models <- list(
+  "NullModel" = function(x){
+    glm(Growth~Size, data=x, family="poisson")
+  },
+  "TimeModel" = function(x){
+    glm(Growth~Size+CollectionDate, data=x, family="poisson")
+  }
+)
+
+predictor.transformations <- list(
+  "CollectionDate" = function(x){mean(x)}
+)
+
+cluster.data <- cluster.ex
+cluster.data[,"RangeID":=0]
+
+res <- fit.analysis(cluster.data,
+                    predictor.transformations = predictor.transformations,
+                    predictive.models = predictive.models)
+
+aics <- get.AIC(res)
+aicdiff <- aics$TimeModelAIC-aics$NullModelAIC
 which.min(aicdiff)
 }
