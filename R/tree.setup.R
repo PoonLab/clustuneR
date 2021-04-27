@@ -387,10 +387,9 @@ taxit.create <- function(t, seqs.full, stats.json, locus = "LOCUS") {
 #' @return A set of trees, each containing 1 new sequence.
 run.pplacer_guppy <- function(refpkg) {
 
-
   # Run pplacer to obtain placements
   system(paste0(
-    "export LC_ALL=C ; ", "pplacer -c ", refpkg,
+    "export LC_ALL=C ; ", "inst/pplacer -c ", refpkg,
     " -o ", refpkg, "/placements.jplace",
     " --verbosity 0",
     " ", refpkg, "/seq.fasta"
@@ -398,7 +397,7 @@ run.pplacer_guppy <- function(refpkg) {
 
   # Run guppy to obtain trees
   system(paste0(
-    "guppy sing ", refpkg, "/placements.jplace",
+    "inst/guppy sing ", refpkg, "/placements.jplace",
     " -o ", refpkg, "/growth.tre"
   ))
 

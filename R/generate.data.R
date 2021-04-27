@@ -41,7 +41,7 @@ generate.tree <- function(){
 #' Create example cluster set
 generate.cluster <- function(){
 
-  cluster.ex <- component.cluster.set <- component.cluster(graph.ex, dist.thresh = 0.015)
+  cluster.ex <- component.cluster.set <- component.cluster(graph.ex, dist.thresh = 0.055)
 
   save(cluster.ex, file="data/cluster.ex.RData")
 }
