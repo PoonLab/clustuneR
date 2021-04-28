@@ -8,6 +8,22 @@
 #'@source \url{https://www.ncbi.nlm.nih.gov/popset?DbFrom=nuccore&Cmd=Link&LinkName=nuccore_popset&IdsFromResult=1033912042}
 "alignment.ex"
 
+
+#'An example set of sequence meta.data corresponding to alignment.ex
+#'
+#'A dataset describing 10 different HIV1 pol sequences collected in Northern Alberta Cabada.
+#'
+#' @format A data.table object with 9 variables:
+#' \describe{
+#' \item{ID} {Accession IDs (characters) of sequences}
+#' \item{CollectionDate} {Collection date of sequences. Full dates given as yyyy-mm-dd}
+#' \item{Subtype} {Subtypes (factors) within a cluster}
+#' \item{Header}{The original headers from the alignement. This matches meta data to sequences}
+#' \
+#' }
+"cluster.ex"
+
+
 #'An example set of clusters, built using component.cluster
 #'
 #'A dataset describing 5 different clusters. Their member headers are listed, as well as the growth they experienced 
@@ -46,3 +62,41 @@
 #' \
 #' }
 "graph.ex"
+
+#'A tree built based on a subset of alignment.ex
+#'
+#'This is a maximum likelyhood tree built using IQ-TREE with model selection and 1000 parametric bootstraps.
+#'The log information for this tree is stored in data/IQTREE_log_ex.txt. A subset of six older sequences 
+#'(collected before January 1st 2012) from alignment.ex was used to construct this tree
+#'
+#'
+#' @format An unrooted, phylogenetic tree with 6 tips and 4 internal nodes. Node labels represent certainty
+#' See ape's implementation of phylogenetic tree objects for information about tags within this object
+"old.tree.ex"
+
+#'A tree built from alignment.ex
+#'
+#'This is a maximum likelihood tree built using IQ-TREE with automatic model selection and 1000 parametric bootstraps.
+#'
+#' @format An unrooted, phylogenetic tree with 10 tips and 8 internal nodes. Node labels represent certainty
+#' See ape's implementation of phylogenetic tree objects for information about tags within this object
+"full.tree.ex"
+
+#'An extension of an ape tree object which can be used to create clusters
+#'
+#'This is a maximum likelihood tree built using IQ-TREE with automatic model selection and 1000 parametric bootstraps.
+#'Additional functions within tree.setup.R were used to annotate information useful for clustering
+#'
+#' @format A , phylogenetic tree with 6 tips and 4 internal nodes. Node labels represent certainty
+#' See ape's implementation of phylogenetic tree objects for information about tags within this object.
+#' In addition, there are 4 new objects created by functions within tree.setup.R
+#' \item{seq.info}{ See seq.info.ex, a data.table containing sequence meta data}
+#' \item{node.info}{ Grouping of the meta.data present in seq.info assigned to various nodes in the tree, coupled with
+#' information important to clustering, such as mean divergence from root, or node certainty }
+#' \item{path.info} { Information regarding the path of edges from tips to the root of the tree. This is also necessary for some clustering algorithms, 
+#' specifically step.cluster}
+#' \item{growth.info}{ a data.table pairing new sequences, to a single node in the tree
+#' based on placements assigned by guppy and pplacer.  
+#' }
+"extended.tree.ex"
+
