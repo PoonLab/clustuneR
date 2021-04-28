@@ -1,6 +1,10 @@
-test_that("Tree can be extended with no new seqs, throws warning", {
+test_that("Tree can be extended with no new seqs or seq.info, throws warning", {
   expect_warning(expect_error(extend.tree(t=old.tree.ex, seq.info=seq.info.ex, mc.cores=1), NA),
                  "Ignoring growth information, path to logfile and full sequence alignment required.")
+  setwd("../../")
+  expect_warning(expect_error(extend.tree(t=old.tree.ex, full.align =  alignment.ex, log.file ="data/IQTREE_log_ex.txt" , mc.cores=1), NA),
+                 "No sequence meta-data included, creating default seq.info input from headers in alignment")
+  setwd("tests/testthat")
 })
 
 test_that("IQ-TREE  Logfiles can be recognized and translated", {

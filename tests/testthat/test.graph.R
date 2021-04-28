@@ -6,6 +6,12 @@ test_that("Graph can be created from dist.dna and cophenetic.phylo TN93 with no 
   expect_error(create.graph(seq.info.ex, edge.info.patristic), NA)
 })
 
+test_that("Graphs and can be created using default sequence information", {
+  edge.info.tn93 <- ape::dist.dna(alignment.ex, pairwise.deletion = T, as.matrix = T, model = "TN93", )
+  expect_warning(expect_error(create.graph(edge.info=edge.info.tn93), NA),
+                 "No sequence meta-data included, creating default seq.info input from headers in edge.info")
+})
+
 param.list <- lapply(c(-Inf,0.06, Inf), function(x){list("g"=graph.ex, "dist.thresh"=x)})
 clusters <- multi.cluster(component.cluster, param.list, mc.cores = 1)
 

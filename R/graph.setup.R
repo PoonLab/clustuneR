@@ -14,11 +14,15 @@
 #' @return A graph, with sequences and edge info. New sequences are only linked by their minimum retrospective edge
 #' @export
 #' @example examples/create.graph_ex.R
-create.graph <- function(seq.info, edge.info, which.new=numeric(0), growth.resolution = minimum.retrospective.edge) {
+create.graph <- function(seq.info=data.table(), edge.info, which.new=numeric(0), growth.resolution = minimum.retrospective.edge) {
 
   # Check inputs
-  if (!all(colnames(edge.info) %in% colnames(edge.info))) {
-    stop("The pairwise distance matrix does not contain the recognized headers")
+  if (nrow(seq.info)==0){
+    warning("No sequence meta-data included, creating default seq.info input from headers in edge.info")
+    seq.info <- data.table("Header"=colnames(edge.info))
+  }
+  if (!all(colnames(edge.info) %in% seq.info$Header)) {
+    stop("The pairwise distance matrix does not contain all recognized headers from alignment")
   }
 
   # Assemble graph object

@@ -4,6 +4,3 @@ test_that("Sequence Headers will be overwritten by full headers if named by User
                  "'Header' is contained within var.names, this will be overwritten")
   expect_true(all(x$Header%in%names(alignment.ex)))
 })
-
-
-

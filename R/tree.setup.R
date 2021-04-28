@@ -12,7 +12,7 @@
 #' @return The tree annotated with node information and seq.info
 #' @export
 #' @example examples/extend.tree_ex.R
-extend.tree <- function(t, seq.info, mc.cores = 1, log.file=NA, full.align=character(0), locus = "LOCUS") {
+extend.tree <- function(t, seq.info=data.table(), mc.cores = 1, log.file=NA, full.align=character(0), locus = "LOCUS") {
 
   # Root the tree (if unrooted) and resolve multichotomies
   if (!ape::is.rooted(t)) {
@@ -21,6 +21,15 @@ extend.tree <- function(t, seq.info, mc.cores = 1, log.file=NA, full.align=chara
   t <- ape::multi2di(t)
 
   # Check Sequence names inputs
+  if (nrow(seq.info)==0){
+    if(length(full.align)!=0){
+      warning("No sequence meta-data included, creating default seq.info input from headers in alignment")
+      seq.info <- data.table("Header"=names(full.align)) 
+    }else{
+      warning("No sequence meta-data included, creating default seq.info input from tree tip.labels")
+      seq.info <- data.table("Header"=t$tip.label) 
+    }
+  }
   var.names <- colnames(seq.info)
   if (!("Header" %in% var.names)) {
     stop("Header must be contained within var.names")
