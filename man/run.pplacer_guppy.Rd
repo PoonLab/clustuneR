@@ -2,7 +2,7 @@
 % Please edit documentation in R/tree.setup.R
 \name{run.pplacer_guppy}
 \alias{run.pplacer_guppy}
-\title{Get grown phylogenies}
+\title{obtain placement information to identify grown phylogenies}
 \usage{
 run.pplacer_guppy(refpkg)
 }
@@ -10,7 +10,7 @@ run.pplacer_guppy(refpkg)
 \item{refpkg:}{A reference package to use as input for pplacer}
 }
 \value{
-A set of trees, each containing 1 new sequence.
+A set of trees, each containing 1 new sequence as a placement
 }
 \description{
 A wrapper for pplacer's basic run function coupled with guppy's sing function.

@@ -1,7 +1,7 @@
 #'Generate data found in /data folder
 #'
-#'This is partially intended as example use code, however may also act as secondary,
-#'informal testing in the development cycle and as a tool to update data quickly if required.
+#'This is partially intended as example use code, however may also act as informal 
+#'testing in the development cycle and as a tool to update data quickly if required.
 generate.all <- function() {
   generate.seq.info()
   generate.graph()

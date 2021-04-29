@@ -6,7 +6,7 @@
 \usage{
 extend.tree(
   t,
-  seq.info,
+  seq.info = data.table(),
   mc.cores = 1,
   log.file = NA,
   full.align = character(0),
@@ -14,10 +14,10 @@ extend.tree(
 )
 }
 \arguments{
-\item{t:}{An inputted tree using ape's tree handling}
+\item{t:}{An inputted tree using ape's tree handling. Un-extended.}
 
 \item{seq.info:}{A data frame or data.table object containing the sequences.
-By default, new sequences are assigned as those not in the tree.}
+New sequences are assigned as those not in the tree.}
 
 \item{log.file:}{A path to the logfile from a tree construction run}
 
@@ -30,7 +30,10 @@ The tree annotated with node information and seq.info
 }
 \description{
 Extends an ape tree object to include annotated node and path information.
-By default this will include some additional info like paths, bootstraps and growth.
+By default this will include some additional info like paths, bootstraps and
+a table of cluster growth. This function makes calls to numerous helpers,
+including the binaries of pplacer and guppy software installed with this package
+(Matsen, 2010)
 }
 \examples{
 t <- extend.tree(old.tree.ex, seq.info.ex,

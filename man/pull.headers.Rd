@@ -9,19 +9,20 @@ pull.headers(seqs, var.names, var.transformations = list(), sep = "_")
 \arguments{
 \item{seqs:}{An inputted alignment using ape's sequence handling}
 
-\item{var.names:}{The names of the variables represented in each header. This must contain "ID".}
+\item{var.names:}{The names of the variables represented in each header.}
 
-\item{var.transformations:}{A list of transformation functions (such as as.character())
-these transform each row into it's proper type. by default, each type is set to character.}
+\item{var.transformations:}{A list of transformation functions (such as as.Date())
+these transform each row into it's proper type. by default, each type is character.}
 
-\item{sep:}{The separator character that splits upthe headers in the fasta file}
+\item{sep:}{The separator character that splits up the headers into variables}
 }
 \value{
-A data.table object containing the information associated with each sequence.
+A data.table object containing sequence meta data paired to headers.
+See seq.info.ex, for more details and an example
 }
 \description{
 Translates a set of sequence headers into a data.frame object for data input.
-NOTE: This must contain, at minimum, a set of unique sequence id's (labelled ID) and one other variable
+For well formatted alignments, this may be an easy way to obtain meta-data.
 }
 \examples{
 seq.info <- pull.headers(alignment.ex, var.names = c("ID", "CollectionDate", "Subtype"),

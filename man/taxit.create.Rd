@@ -19,7 +19,6 @@ taxit.create(t, seqs.full, stats.json, locus = "LOCUS")
 Path to a temporary refpkg directory
 }
 \description{
-A wrapper for the taxit create function used by pplacer. This will generate a summary json
-See pplacer's basic function regarding alignments and tree function
-NOTE: Creates temporary files. These are only deleted with the end of the session
+A wrapper for the taxit.create function used by pplacer. This will generate a
+temporary refpkg file based on passed tree and alignment data summary json.
 }

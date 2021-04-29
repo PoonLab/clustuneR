@@ -4,22 +4,24 @@
 \alias{component.cluster}
 \title{Create clusters based on the components of a graph}
 \usage{
-component.cluster(g, dist.thresh = 0.007, setID = 0)
+component.cluster(g, dist.thresh = 0, setID = 0)
 }
 \arguments{
-\item{g:}{The input graph, annotated with vertex and edge information}
+\item{g:}{The input graph, annotated with vertex, edge, and growth resolution
+information}
 
-\item{dist.thresh:}{The maximum distance defining which edges are filtered}
+\item{dist.thresh:}{The maximum distance defining which edges are filtered.
+A higher distance threshold implies a larger average cluster size}
 
-\item{setID:}{If several different parameter ranges are used, the setID can identify them}
+\item{setID:}{A numeric identifier for this cluster set.}
 }
 \value{
-A data table which represents cluster information. This includes growth info
-Because data.tables are being used, this prevents original values being reassigned via pointer
+A set of clusters as a data.table. See example cluster.ex object
+documentation for an example of clustered sequence data + meta data
 }
 \description{
-This uses a homogenization algorithm to identify disconnected components in a graph.
-Edges are filtered away using a distance threshold to result in components.
+Edges are filtered away using a distance threshold to break up the completely
+connected graph such that only similar edges remain.
 }
 \examples{
 component.cluster.set <- component.cluster(graph.ex, dist.thresh = 0.06)

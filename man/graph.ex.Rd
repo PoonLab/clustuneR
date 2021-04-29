@@ -19,7 +19,8 @@ sequence they are most similar to. }
 graph.ex
 }
 \description{
-This implementation of a graph is a list, describing a set of sequences and the distances between them.
-See create.graph for more information on how this graph was created using alignment.ex as input
+This implementation of a graph is a list, describing a set of sequences and the
+distances between them. See create.graph for more information on how this graph
+was created using alignment.ex as input
 }
 \keyword{datasets}

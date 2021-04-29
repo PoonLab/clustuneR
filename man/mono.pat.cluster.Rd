@@ -2,7 +2,7 @@
 % Please edit documentation in R/tree.clustering.R
 \name{mono.pat.cluster}
 \alias{mono.pat.cluster}
-\title{Obtain clusters based on a monophyletic group in tree}
+\title{Obtain monophyletic clusters based on pairwise distances}
 \usage{
 mono.pat.cluster(
   t,
@@ -15,18 +15,26 @@ mono.pat.cluster(
 \arguments{
 \item{t:}{The input tree file, annotated with vertex and edge information}
 
-\item{dist.criterion:}{A particular column in node.info that must be less than a distance threshold}
+\item{dist.criterion:}{A particular column in node.info that must be less than
+a distance threshold. By default, this is "max.patristic.dist", however, the
+"mean.patristic.dist" is also a column. Other columns added to node.info can
+be checked against dist.thresh, however, these would be added by the user.}
 
-\item{dist.thresh:}{The threshold required for clustering.}
+\item{dist.thresh:}{The threshold required for clustering. Monophyletic groups
+with criterion under this value could be considered clusters.}
 
-\item{setID:}{If several different parameter ranges are used, the setID can identify them.}
+\item{setID:}{A numeric identifier for this cluster set.}
 
-\item{boot.thresh:}{The minimum bootstrap criterion defining clusters}
+\item{boot.thresh:}{The minimum bootstrap threshold defining clusters. Monophyletic
+groups with a parent node more certain than this criterion could be considered
+clusters}
 }
 \value{
-A data table which extends a subset of node.info. This includes growth info
+: A set of clusters as a data.table. See example cluster.ex object
+documentation for an example of clustered sequence data + meta data
 }
 \description{
-Clusters as a monophyletic clade under a high-confidence common ancestor.
-The pairwise patristic distances in this clade must all
+Clusters are defined as  as a monophyletic clade under a high-confidence common
+ancestor. Some measure of divergence (criterion) within this clade must fall
+under a distance threshold in order for it to be labelled a cluster.
 }

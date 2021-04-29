@@ -5,31 +5,35 @@
 \title{Makes a graph object based on sequence data and pairwise comparisons}
 \usage{
 create.graph(
-  seq.info,
+  seq.info = data.table(),
   edge.info,
   which.new = numeric(0),
   growth.resolution = minimum.retrospective.edge
 )
 }
 \arguments{
-\item{seq.info:}{A set of sequence meta-data sorted by alignment header}
+\item{seq.info:}{A set of sequence meta-data coupled to alignment header}
 
 \item{edge.info:}{A pairwise edge matrix of all associated headers in seq.info}
 
-\item{which.new:}{A set of indices of which sequences were to be labelled "new". this labels certain}
+\item{which.new:}{Which sequences in seq.info are "new". this is a list of indices.}
 
-\item{growth.resolution:}{The method by which growth is resolved. This ensures new cases don't merge clusters
-By default, each new sequence joins a cluster by only it's minimum retrospective}
+\item{growth.resolution:}{The method by which growth is resolved. This ensures
+new cases don't merge clusters. By default, each new sequence joins a cluster
+by only it's minimum retrospective edge.}
 }
 \value{
-A graph, with sequences and edge info. New sequences are only linked by their minimum retrospective edge
+A graph, with sequences and edge info, as well as a growth resolution.
+See graph.ex for a more detailed example with annotated data.
 }
 \description{
-Create an implementation of a graph. This is a list, consisting of a distance matrix and some sequence meta data (seq.info)
-A large part of this process involves resolving growth, ensuring that new sequences are only added prospectively without merging clusters.
-At this point, we also annotate the minimum retrospective edges of each edge. This is stored in sequence information
-NOTE: Other growth resolutions may be possible such as random joining, or partial joining, however, these are not currently
-investigated or implemented
+Create an implementation of a graph. This is a list, consisting of a distance
+matrix and some sequence meta data (seq.info). Any new sequences are resolved
+as growth ensuring that new sequences are added prospectively without merging
+clusters. Clusters containing purely new sequences are also ignored for this
+purpose. At this point, new sequences only connect to the closest non-new
+neighbour (although other options for growth resolutions may exist and be
+implemented).
 }
 \examples{
 edge.info <- ape::dist.dna(alignment.ex, pairwise.deletion = T, as.matrix = T, model = "TN93", )

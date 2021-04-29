@@ -1,17 +1,22 @@
-Package: MountainPlot
+Package: clustuneR
 Title: Molecular clustering implementation and predictive optimization
-Version: 0.0.0.9000
+Version: 1.0
 Authors@R: 
-  person(given = "Connor", family = "Chato", role = c("aut", "cre"), email = "ConnorChato@gmail.com")
-Description: This package can take identify clusters from the ape package's 
-  implementation of tree and sequence data. Multiple common definitions of sequence
-  based clusters are implemented as functions, with a cluster neatly standardized 
-  as a row in a data.table object. This also offers some ability to run and test 
-  predictive models on clustered data sets, tracking the effect of known variables 
-  within clusters (ex. time) on outcomes such as cluster growth over time. Several
-  built in functions handle the measurement and definition of cluster growth for
-  this purpose. Optimal clusters(built under a certain set of parameters) can be
-  identified based on predictive model performance.
+    c(person("Connor", "Chato", email = "ConnorChato@gmail.com",
+              role = c("aut", "cre")),
+    person("Art", "Poon", role="ths"))
+Description: clustuneR builds clusters from inputted sequence alignments and/or 
+    phylogenetic trees, allowing users to choose between multiple cluster-building 
+    algorithms implememented in the package and tune clustering parameters to produce 
+    informative clusters. The package also takes in meta-data associated with sequences 
+    such as a known collection date or subtype/variant classification. Cluster-level 
+    characteristics, such as the range of collection dates or the most common 
+    subtype/variant within a cluster can also be identified from these. 
+    If a subset of sequences are specified as "New", then clustuneR simulates cluster 
+    growth by building clusters in two stages: first clusters are built from sequences 
+    which are not specified as new, then the new sequences are added to clusters. 
+    Predictive models can then be tested on cluster-level attributes and validated 
+    with growth outcomes, to measure how informative a cluster set is.
 License: `use_gpl3_license()`
 Encoding: UTF-8
 Imports: 

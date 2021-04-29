@@ -2,7 +2,7 @@
 % Please edit documentation in R/graph.setup.R
 \name{minimum.retrospective.edge}
 \alias{minimum.retrospective.edge}
-\title{A growth resolution helper.}
+\title{The default growth resolution helper.}
 \usage{
 minimum.retrospective.edge(g)
 }
@@ -10,8 +10,9 @@ minimum.retrospective.edge(g)
 \item{g:}{The input graph}
 }
 \value{
-A data table matching each new sequence with its closest retrospective neighbour
+A data table matching each new sequence with its closest neighbour
 }
 \description{
-Ensures that new sequences only join old clusters through their minimum, retrospective edge
+Ensures that new sequences only join old clusters through their minimum
+retrospective edge. A growth resolution
 }

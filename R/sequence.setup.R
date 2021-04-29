@@ -1,14 +1,15 @@
 #' Get seq.info from headers
 #'
 #' Translates a set of sequence headers into a data.frame object for data input.
-#' NOTE: This must contain, at minimum, a set of unique sequence id's (labelled ID) and one other variable
-#'
+#' For well formatted alignments, this may be an easy way to obtain meta-data.
+#' 
 #' @param seqs: An inputted alignment using ape's sequence handling
-#' @param var.names: The names of the variables represented in each header. This must contain "ID".
-#' @param var.transformations: A list of transformation functions (such as as.character())
-#' these transform each row into it's proper type. by default, each type is set to character.
-#' @param sep: The separator character that splits upthe headers in the fasta file
-#' @return A data.table object containing the information associated with each sequence.
+#' @param var.names: The names of the variables represented in each header.
+#' @param var.transformations: A list of transformation functions (such as as.Date())
+#' these transform each row into it's proper type. by default, each type is character.
+#' @param sep: The separator character that splits up the headers into variables
+#' @return A data.table object containing sequence meta data paired to headers. 
+#' See seq.info.ex, for more details and an example
 #' @export
 #' @example examples/pull.headers_ex.R
 pull.headers <- function(seqs, var.names, var.transformations = list(), sep = "_") {
@@ -36,7 +37,6 @@ pull.headers <- function(seqs, var.names, var.transformations = list(), sep = "_
   split.headers <- sapply(names(seqs), function(x) {
     strsplit(x, sep)[[1]]
   })
-
 
   seq.info <- lapply(1:nrow(split.headers), function(i) {
     x <- unname(split.headers[i, ])

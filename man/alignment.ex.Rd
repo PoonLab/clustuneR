@@ -5,7 +5,8 @@
 \alias{alignment.ex}
 \title{An alignment of HIV1, subtype B sequences}
 \format{
-An ape DNA object: 10 DNA sequences in binary format stored in a list. All sequences of same length: 1017
+An ape DNA object: 10 DNA sequences in binary format stored in a list.
+All sequences of same length: 1017
 }
 \source{
 \url{ https://www.ncbi.nlm.nih.gov/popset?DbFrom=nuccore&Cmd=Link&LinkName=nuccore_popset&IdsFromResult=1033912042 }
@@ -14,7 +15,8 @@ An ape DNA object: 10 DNA sequences in binary format stored in a list. All seque
 alignment.ex
 }
 \description{
-A dataset containing 10 HIV1, subtype B polymerase sequences collected in Northern Alberta Canada.
-This a 10 sequence sample from popset# 1033910942 on NCBI's genbank Archive
+A dataset containing 10 HIV1, subtype B polymerase sequences collected in Northern
+Alberta Canada. This a 10 sequence sample from popset# 1033910942 on NCBI's genbank
+Archive. The sequence headers also include meta-data for sequences.
 }
 \keyword{datasets}

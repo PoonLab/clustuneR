@@ -1,13 +1,19 @@
-#' Obtain clusters based on path to ancestor in tree
+#' Obtain paraphyletic clusters
 #'
-#' Clusters are defined as a series of tips diverging from A high confidence common ancestor.
-#' This divergence must be done through a series of short branches, which the branch.thresh constrains.
+#' Clusters are defined as a group of tips diverging from a high confidence common 
+#' ancestor. Divergence must be done through a series of short branches, which 
+#' the branch.thresh constrains.
 #'
-#' @param t: The input tree file, annotated with vertex and edge information
-#' @param branch.thresh: The maximum branch length criterion defining clusters
-#' @param boot.thresh: The minimum bootstrap criterion defining clusters
-#' @param setID: If several different parameter ranges are used, the setID can identify them
-#' @return A data table which extends a subset of node.info. This includes growth info
+#' @param t: The input tree file, extended to be annotated with vertex, edge and 
+#' growth information.
+#' @param branch.thresh: The maximum branch length criterion defining clusters.
+#' A branch exceeding this value separates the tip from it's ancestor's cluster.
+#' Higher values imply larger average cluster sizes.
+#' @param boot.thresh: The minimum bootstrap criterion defining clusters.
+#' Lower values imply larger average cluster size
+#' @param setID: A numeric identifier for this cluster set.
+#' @return: A set of clusters as a data.table. See example cluster.ex object 
+#' documentation for an example of clustered sequence data + meta data
 #' @export
 #' @example examples/step.cluster_ex.R
 step.cluster <- function(t, branch.thresh = 0.03, boot.thresh = 0, setID = 0) {
@@ -82,19 +88,27 @@ step.cluster <- function(t, branch.thresh = 0.03, boot.thresh = 0, setID = 0) {
 }
 
 
-## - TO-DO: SOLVE MONOPHYLETIC CLUSTER GROWTH IN A SIMPLE WAY -##
-#' Obtain clusters based on a monophyletic group in tree
+#' Obtain monophyletic clusters based on pairwise distances
 #'
-#' Clusters as a monophyletic clade under a high-confidence common ancestor.
-#' The pairwise patristic distances in this clade must all
+#' Clusters are defined as  as a monophyletic clade under a high-confidence common 
+#' ancestor. Some measure of divergence (criterion) within this clade must fall 
+#' under a distance threshold in order for it to be labelled a cluster.
 #'
 #' @param t: The input tree file, annotated with vertex and edge information
-#' @param dist.criterion: A particular column in node.info that must be less than a distance threshold
-#' @param dist.thresh: The threshold required for clustering.
-#' @param setID: If several different parameter ranges are used, the setID can identify them.
-#' @param boot.thresh: The minimum bootstrap criterion defining clusters
-#' @return A data table which extends a subset of node.info. This includes growth info
-mono.pat.cluster <- function(t, dist.thresh, boot.thresh = 0, dist.criterion = "max.patristic.dist", setID = 0) {
+#' @param dist.criterion: A particular column in node.info that must be less than 
+#' a distance threshold. By default, this is "max.patristic.dist", however, the 
+#' "mean.patristic.dist" is also a column. Other columns added to node.info can 
+#'  be checked against dist.thresh, however, these would be added by the user.
+#' @param dist.thresh: The threshold required for clustering. Monophyletic groups
+#' with criterion under this value could be considered clusters.
+#' @param setID: A numeric identifier for this cluster set.
+#' @param boot.thresh: The minimum bootstrap threshold defining clusters. Monophyletic
+#' groups with a parent node more certain than this criterion could be considered 
+#' clusters
+#' @return: A set of clusters as a data.table. See example cluster.ex object 
+#' documentation for an example of clustered sequence data + meta data
+mono.pat.cluster <- function(t, dist.thresh, boot.thresh = 0, 
+                             dist.criterion = "max.patristic.dist", setID = 0) {
 
   warning("Method unfinished. Growth information for clusters not included")
 

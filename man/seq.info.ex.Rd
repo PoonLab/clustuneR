@@ -5,18 +5,21 @@
 \alias{seq.info.ex}
 \title{An example set of sequence meta.data corresponding to alignment.ex}
 \format{
-A data.table object with 9 variables:
+A data.table object with 4 variables:
 \describe{
 \item{ID}{Accession IDs (characters) of sequences}
 \item{CollectionDate}{Collection date of sequences. Full dates given as yyyy-mm-dd}
-\item{Subtype}{Subtypes (factors) within a cluster}
-\item{Header}{The original headers from the alignement. This matches meta data to sequences}
+\item{Subtype}{Subtypes (factors) of sequences}
+\item{Header}{The original headers from the alignement. This matches meta
+data to sequences in original alignment}
 }
 }
 \usage{
 seq.info.ex
 }
 \description{
-A dataset describing 10 different HIV1 pol sequences collected in Northern Alberta Canada.
+Built from alignment.ex, the example 10 sequence alignment using pull.headers.
+The date of each sequence's collection, it's genbank unique accession ID, and
+sequence subtype are referenced within the header
 }
 \keyword{datasets}

@@ -2,25 +2,31 @@
 % Please edit documentation in R/tree.clustering.R
 \name{step.cluster}
 \alias{step.cluster}
-\title{Obtain clusters based on path to ancestor in tree}
+\title{Obtain paraphyletic clusters}
 \usage{
 step.cluster(t, branch.thresh = 0.03, boot.thresh = 0, setID = 0)
 }
 \arguments{
-\item{t:}{The input tree file, annotated with vertex and edge information}
+\item{t:}{The input tree file, extended to be annotated with vertex, edge and
+growth information.}
 
-\item{branch.thresh:}{The maximum branch length criterion defining clusters}
+\item{branch.thresh:}{The maximum branch length criterion defining clusters.
+A branch exceeding this value separates the tip from it's ancestor's cluster.
+Higher values imply larger average cluster sizes.}
 
-\item{boot.thresh:}{The minimum bootstrap criterion defining clusters}
+\item{boot.thresh:}{The minimum bootstrap criterion defining clusters.
+Lower values imply larger average cluster size}
 
-\item{setID:}{If several different parameter ranges are used, the setID can identify them}
+\item{setID:}{A numeric identifier for this cluster set.}
 }
 \value{
-A data table which extends a subset of node.info. This includes growth info
+: A set of clusters as a data.table. See example cluster.ex object
+documentation for an example of clustered sequence data + meta data
 }
 \description{
-Clusters are defined as a series of tips diverging from A high confidence common ancestor.
-This divergence must be done through a series of short branches, which the branch.thresh constrains.
+Clusters are defined as a group of tips diverging from a high confidence common
+ancestor. Divergence must be done through a series of short branches, which
+the branch.thresh constrains.
 }
 \examples{
 step.cluster.set <- step.cluster(extended.tree.ex, branch.thresh = 0.03, boot.thresh = 0)

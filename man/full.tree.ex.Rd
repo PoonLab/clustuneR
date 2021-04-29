@@ -5,13 +5,16 @@
 \alias{full.tree.ex}
 \title{A tree built from alignment.ex}
 \format{
-An unrooted, phylogenetic tree with 10 tips and 8 internal nodes. Node labels represent certainty
-See ape's implementation of phylogenetic tree objects for information about tags within this object
+An unrooted, phylogenetic tree with 10 tips and 8 internal nodes. Node
+labels represent certainty. See ape's implementation of phylogenetic tree objects
+for information about tags within this object.
 }
 \usage{
 full.tree.ex
 }
 \description{
-This is a maximum likelihood tree built using IQ-TREE with automatic model selection and 1000 parametric bootstraps.
+This is a maximum likelihood tree built using IQ-TREE with automatic model
+selection and 1000 parametric bootstraps. Contrasting old.tree.ex. This is a
+complete tree containing all sequences in alignment.ex
 }
 \keyword{datasets}

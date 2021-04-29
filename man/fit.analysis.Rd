@@ -13,23 +13,29 @@ fit.analysis(
 )
 }
 \arguments{
-\item{cluster.data:}{Inputted set(s) of clusters May or may not be sorted into ranges}
+\item{cluster.data:}{Inputted set(s) of clusters. Possibly multiple ranges}
 
 \item{mc.cores:}{A parallel option to increase run speed}
 
-\item{predictor.transformations:}{A named list of transformation functions for each predictor variable.
-This name should correspond to a column from the cluster.data, which will be taken as input for the function.
-for example list("CollectionDate"=mean), would change the collection date column to a vector of means
-instead of a list collection date vectors}
+\item{predictor.transformations:}{A named list of transformation functions for
+each predictor variable (ex. list("Data"==sum). Because clustered meta data takes
+the form of a list these functions are often necessary to obtain a single,
+cluster-level variable}
 
-\item{predictive.models:}{A named list of functions, each of which applies a model to inputted data (x). See default null for example.}
+\item{predictive.models:}{A named list of functions, each of which applies a
+model to inputted cluster data (x). By default a "NullModel" example. Where
+Growth is predicted only by cluster size}
 }
 \value{
-A data.table of analysis results. Several important summary values such as null and full AIC are proposed here.
+A data.table of analysis results. Model fits are stored as entries in
+the rows of a data.table. The column specifying setID is retained, as is the
+range ID and the parameters used to create the cluster.
 }
 \description{
-Fits a predictive model of some outcome (by default, cluster growth) to sets of cluster data.
-These fits are recorded for each use of the predictive model on a given cluster set
+Fits predictive model of some outcome (by default, cluster growth) to some
+cluster-level variable (by default, cluster size). This fit is done for each
+cluster set. Multiple models can be inputted as a named list of functions taking
+in cluster data (see example)
 }
 \examples{
 cluster.data <- cluster.ex

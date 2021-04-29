@@ -7,14 +7,20 @@
 \format{
 A data.table object with 9 variables:
 \describe{
-\item{ClusterID}{ The unique identifier number for this cluster. A numberic}
-\item{ID}{A list of vectors, each containing the accession IDs (characters) of sequences within a cluster}
-\item{CollectionDate}{A list of vectors, each containing the collection date of sequences within a cluster}
-\item{Subtype}{A list of vectors, each containing the subtypes (factors) within a cluster}
-\item{Header}{A list of vectors, each containing the original headers from the alignement used to build this set of clusters}
-\item{Size}{The original size of this cluster before being updated with new cases. This simply the number of sequences within the cluster}
+\item{ClusterID}{ The unique identifier number for this cluster. A numeric}
+\item{ID}{A list of vectors, each containing the accession IDs (characters)
+of sequences within a cluster}
+\item{CollectionDate}{A list of vectors, each containing the collection date
+of sequences within a cluster}
+\item{Subtype}{A list of vectors, each containing the subtypes (factors) within
+a cluster}
+\item{Header}{A list of vectors, each containing the original headers from the
+alignement used to build this set of clusters}
+\item{Size}{The original size of this cluster before being updated with new cases.
+This simply the number of sequences within the cluster}
 \item{Growth}{The growth of the cluster after new cases are added}
-\item{DistThresh}{The pairwise distance threshold used to create this complete set of clusters. Corresponds to a setID as an input parameter}
+\item{DistThresh}{The pairwise distance threshold used to create this complete
+set of clusters. Corresponds to a setID as an input parameter}
 \item{SetID}{The unique identifier for this set of clusters. A numeric}
 }
 }
@@ -22,8 +28,9 @@ A data.table object with 9 variables:
 cluster.ex
 }
 \description{
-A dataset describing 5 different clusters. Their member headers are listed, as well as the growth they experienced
-(ie. the number of new sequences forming clusters with old sequences.). See component.cluster for further information on
-how these were assigned based on graph.ex as an input
+A dataset describing 5 different clusters. The headers (from alignment.ex), and
+associated meta data (from seq.info.ex) of cluster members is captured, as well
+as several cluster-level traits, such as growth and size. See component.cluster
+or further information onhow these were assigned based on graph.ex as an input
 }
 \keyword{datasets}

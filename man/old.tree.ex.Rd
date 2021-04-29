@@ -5,15 +5,17 @@
 \alias{old.tree.ex}
 \title{A tree built based on a subset of alignment.ex}
 \format{
-An unrooted, phylogenetic tree with 6 tips and 4 internal nodes. Node labels represent certainty
-See ape's implementation of phylogenetic tree objects for information about tags within this object
+An unrooted, phylogenetic tree with 6 tips and 4 internal nodes.
+Node labels represent certainty. See ape's implementation of phylogenetic tree
+objects for information about tags within this object
 }
 \usage{
 old.tree.ex
 }
 \description{
-This is a maximum likelyhood tree built using IQ-TREE with model selection and 1000 parametric bootstraps.
-The log information for this tree is stored in data/IQTREE_log_ex.txt. A subset of six older sequences
-(collected before January 1st 2012) from alignment.ex was used to construct this tree
+A maximum likelihood tree built using IQ-TREE with model selection and 1000
+parametric bootstraps. The log information for this tree is stored in data/IQTREE_log_ex.txt.
+A subset of six older sequences (collected before January 1st 2012) from alignment.ex
+was used to construct this tree.
 }
 \keyword{datasets}

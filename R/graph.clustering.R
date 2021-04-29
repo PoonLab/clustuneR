@@ -1,16 +1,18 @@
 #' Create clusters based on the components of a graph
 #'
-#' This uses a homogenization algorithm to identify disconnected components in a graph.
-#' Edges are filtered away using a distance threshold to result in components.
+#' Edges are filtered away using a distance threshold to break up the completely 
+#' connected graph such that only similar edges remain.
 #'
-#' @param g: The input graph, annotated with vertex and edge information
-#' @param dist.thresh: The maximum distance defining which edges are filtered
-#' @param setID: If several different parameter ranges are used, the setID can identify them
-#' @return A data table which represents cluster information. This includes growth info
-#' Because data.tables are being used, this prevents original values being reassigned via pointer
+#' @param g: The input graph, annotated with vertex, edge, and growth resolution
+#' information
+#' @param dist.thresh: The maximum distance defining which edges are filtered.
+#' A higher distance threshold implies a larger average cluster size
+#' @param setID: A numeric identifier for this cluster set.
+#' @return A set of clusters as a data.table. See example cluster.ex object 
+#' documentation for an example of clustered sequence data + meta data
 #' @export
 #' @example examples/component.cluster_ex.R
-component.cluster <- function(g, dist.thresh = 0.007, setID = 0) {
+component.cluster <- function(g, dist.thresh = 0, setID = 0) {
 
   # Filter edges above the distance threshold and prepare for component finding algorithm
   # All edges from a new sequence are filtered except for their "growth-resolved" edge

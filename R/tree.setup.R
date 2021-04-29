@@ -1,18 +1,22 @@
 #' Prepare a tree for clustering
 #'
 #' Extends an ape tree object to include annotated node and path information.
-#' By default this will include some additional info like paths, bootstraps and growth.
+#' By default this will include some additional info like paths, bootstraps and 
+#' a table of cluster growth. This function makes calls to numerous helpers,
+#' including the binaries of pplacer and guppy software installed with this package
+#' (Matsen, 2010)
 #'
-#' @param t: An inputted tree using ape's tree handling
+#' @param t: An inputted tree using ape's tree handling. Un-extended.
 #' @param seq.info: A data frame or data.table object containing the sequences.
-#' By default, new sequences are assigned as those not in the tree.
+#' New sequences are assigned as those not in the tree.
 #' @param log.file: A path to the logfile from a tree construction run
 #' @param seqs.full: The full alignment. Including sequences excluded from the tree.
 #' @param mc.cores: Passed to annotate.nodes as a parallel option
 #' @return The tree annotated with node information and seq.info
 #' @export
 #' @example examples/extend.tree_ex.R
-extend.tree <- function(t, seq.info=data.table(), mc.cores = 1, log.file=NA, full.align=character(0), locus = "LOCUS") {
+extend.tree <- function(t, seq.info=data.table(), mc.cores = 1, log.file=NA, 
+                        full.align=character(0), locus = "LOCUS") {
 
   # Root the tree (if unrooted) and resolve multichotomies
   if (!ape::is.rooted(t)) {
@@ -75,12 +79,14 @@ extend.tree <- function(t, seq.info=data.table(), mc.cores = 1, log.file=NA, ful
 
 #' Prepare nodes in tree for clustering
 #'
-#' Called by extend.tree. Adds additional node info to the tree. Required for mono.cluster()
-#' NOTE: Unlabeled nodes are defaulted to a bootstrap value of 1
+#' Groups meta data by descendant. This also includes bootstrap certainty referenced
+#' by node labels in the ape object. Unlabeled nodes are defaulted to a bootstrap 
+#' value of 1 (maximum certainty), including the root.
 #'
-#' @param t: An inputted tree using ape's tree handling. This must be annotated with seq.info
-#' @param mc.cores: A parallel option
-#' @return A slightly more detailed data table to replace "node.info" to a given tree.
+#' @param t: An inputted tree passed by extend.tree. Should contain seq.info
+#' @param mc.cores: A parallel option to increas speed
+#' @return A  data table, "node.info" to a annotate the information under a given
+#' node at a tree.
 annotate.nodes <- function(t, mc.cores = 1) {
 
   # Unlabelled nodes are defaulted to a bootstrap value of 1
@@ -120,12 +126,13 @@ annotate.nodes <- function(t, mc.cores = 1) {
 
 #' Get paths relative to starting nodes
 #'
-#' Called by extend.tree. Adds path info to the tree. Required for step.cluster()
+#' Called by extend.tree. Adds path info to the tree, ie. The path of branches from
+#' each node to the root. Required for step.cluster()
 #'
-#' @param t: An inputted tree using ape's tree handling
-#' @return A matrix labelled "path.info" to attach to a given tree.
-#' For each node in the path the branch lengths (below node) and bootstraps are given
-#' For the terminal node, no branch length is given below the node and the bootstrap is 1
+#' @param t: An inputted tree An inputted tree passed by extend.tree.
+#' @return A matrix labelled "path.info" to attach to a given tree. For each node 
+#' in the path the branch lengths (below node) and bootstraps are given. For terminal 
+#' nodes, no branch length is given below the node and the bootstrap is 1
 annotate.paths <- function(t) {
 
   # Get paths and length information from terminal nodes
@@ -176,13 +183,16 @@ annotate.paths <- function(t) {
 
 #' Add the growth information onto the known tree.
 #'
-#' This uses pplacer to ensure that previously defined clusters remain the same.
-#' New tips are assigned a set of possible placements in the tree.
+#' This uses pplacer software to ensure that previously defined clusters remain 
+#' the same. New tips are assigned a set of possible placements in the tree.
 #'
-#' @param t: An inputted tree using ape's tree handling
+#' @param t: An inputted tree using ape's tree handling passed by extend.tree
 #' @param t.growth: A set of trees from pplacer. Each with a newly added tip.
 #' @param mc.cores: A parallel option
-#' @return The input tree annotated with growth information stored as growth.info.
+#' @return The growth.info for a given tree. This includes the branch length to the 
+#' newly added terminal node, whether or not the neighbour to the newly added terminal
+#' node is also terminal, and the branch length to that neighbour, from the newly 
+#' placed internal node (the "PendantLength")
 annotate.growth <- function(t, t.grown, mc.cores = 1) {
 
   # Obtain placement information from trees.
@@ -245,13 +255,13 @@ annotate.growth <- function(t, t.grown, mc.cores = 1) {
 
 #' Build a stats.json
 #'
-#' Parses the logfile output of tree building software to find information relevant to pplacer.
-#' Prints stats to a temporary ref.pkg file and returns the path to that file.
-#' NOTE: Currently compatible with GTR substitution model and either FastTree, RAxML or IQ-TREE logfiles.
-#' Working to extend this to PhyML logfiles, and then to different models of evolution
+#' Parses the logfile output of tree building software to find information relevant 
+#' to pplacer. Prints stats to a temporary ref.pkg file and returns the file path
+#' NOTE: Currently compatible with GTR substitution model and either FastTree, 
+#' RAxML or IQ-TREE logfiles. Working to extend this to PhyML logfiles, and to 
+#' different models of evolution
 #'
-#' @param log.file: A path to the logfile from a tree construction run
-#' @param substitution.model: The substitution model used. Currently only accepts "GTR"
+#' @param log.file: A path to the logfile from a tree construction run.
 #' @return A json output to be written to a given stats.file for pplacer
 translate.log <- function(log.file) {
 
@@ -319,10 +329,9 @@ translate.log <- function(log.file) {
 
 #' Create a refpkg
 #'
-#' A wrapper for the taxit create function used by pplacer. This will generate a summary json
-#' See pplacer's basic function regarding alignments and tree function
-#' NOTE: Creates temporary files. These are only deleted with the end of the session
-#'
+#' A wrapper for the taxit.create function used by pplacer. This will generate a 
+#' temporary refpkg file based on passed tree and alignment data summary json. 
+#' 
 #' @param t: The tree (made on a subset of the full alignment)
 #' @param seqs.full: The full alignment. Including sequences excluded from the tree.
 #' @param stats.json: Path to the full alignment file (new + old seqs)
@@ -387,13 +396,13 @@ taxit.create <- function(t, seqs.full, stats.json, locus = "LOCUS") {
   return(refpkg)
 }
 
-##- TO-DO: Include package binaries such that it is not a requirement to install both pplacer and guppy -##
-#' Get grown phylogenies
+#' obtain placement information to identify grown phylogenies
 #'
 #' A wrapper for pplacer's basic run function coupled with guppy's sing function.
 #' Together, these extend fixed trees with most likely placement locations.
+#' 
 #' @param refpkg: A reference package to use as input for pplacer
-#' @return A set of trees, each containing 1 new sequence.
+#' @return A set of trees, each containing 1 new sequence as a placement
 run.pplacer_guppy <- function(refpkg) {
 
   # Run pplacer to obtain placements

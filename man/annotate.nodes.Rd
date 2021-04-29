@@ -7,14 +7,16 @@
 annotate.nodes(t, mc.cores = 1)
 }
 \arguments{
-\item{t:}{An inputted tree using ape's tree handling. This must be annotated with seq.info}
+\item{t:}{An inputted tree passed by extend.tree. Should contain seq.info}
 
-\item{mc.cores:}{A parallel option}
+\item{mc.cores:}{A parallel option to increas speed}
 }
 \value{
-A slightly more detailed data table to replace "node.info" to a given tree.
+A  data table, "node.info" to a annotate the information under a given
+node at a tree.
 }
 \description{
-Called by extend.tree. Adds additional node info to the tree. Required for mono.cluster()
-NOTE: Unlabeled nodes are defaulted to a bootstrap value of 1
+Groups meta data by descendant. This also includes bootstrap certainty referenced
+by node labels in the ape object. Unlabeled nodes are defaulted to a bootstrap
+value of 1 (maximum certainty), including the root.
 }

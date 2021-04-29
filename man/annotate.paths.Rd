@@ -7,13 +7,14 @@
 annotate.paths(t)
 }
 \arguments{
-\item{t:}{An inputted tree using ape's tree handling}
+\item{t:}{An inputted tree An inputted tree passed by extend.tree.}
 }
 \value{
-A matrix labelled "path.info" to attach to a given tree.
-For each node in the path the branch lengths (below node) and bootstraps are given
-For the terminal node, no branch length is given below the node and the bootstrap is 1
+A matrix labelled "path.info" to attach to a given tree. For each node
+in the path the branch lengths (below node) and bootstraps are given. For terminal
+nodes, no branch length is given below the node and the bootstrap is 1
 }
 \description{
-Called by extend.tree. Adds path info to the tree. Required for step.cluster()
+Called by extend.tree. Adds path info to the tree, ie. The path of branches from
+each node to the root. Required for step.cluster()
 }

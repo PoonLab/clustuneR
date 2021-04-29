@@ -7,16 +7,15 @@
 translate.log(log.file)
 }
 \arguments{
-\item{log.file:}{A path to the logfile from a tree construction run}
-
-\item{substitution.model:}{The substitution model used. Currently only accepts "GTR"}
+\item{log.file:}{A path to the logfile from a tree construction run.}
 }
 \value{
 A json output to be written to a given stats.file for pplacer
 }
 \description{
-Parses the logfile output of tree building software to find information relevant to pplacer.
-Prints stats to a temporary ref.pkg file and returns the path to that file.
-NOTE: Currently compatible with GTR substitution model and either FastTree, RAxML or IQ-TREE logfiles.
-Working to extend this to PhyML logfiles, and then to different models of evolution
+Parses the logfile output of tree building software to find information relevant
+to pplacer. Prints stats to a temporary ref.pkg file and returns the file path
+NOTE: Currently compatible with GTR substitution model and either FastTree,
+RAxML or IQ-TREE logfiles. Working to extend this to PhyML logfiles, and to
+different models of evolution
 }

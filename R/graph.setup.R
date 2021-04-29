@@ -1,20 +1,25 @@
 #' Makes a graph object based on sequence data and pairwise comparisons
 #'
-#' Create an implementation of a graph. This is a list, consisting of a distance matrix and some sequence meta data (seq.info)
-#' A large part of this process involves resolving growth, ensuring that new sequences are only added prospectively without merging clusters.
-#' At this point, we also annotate the minimum retrospective edges of each edge. This is stored in sequence information
-#' NOTE: Other growth resolutions may be possible such as random joining, or partial joining, however, these are not currently
-#' investigated or implemented
-#'
-#' @param seq.info: A set of sequence meta-data sorted by alignment header
+#' Create an implementation of a graph. This is a list, consisting of a distance 
+#' matrix and some sequence meta data (seq.info). Any new sequences are resolved
+#' as growth ensuring that new sequences are added prospectively without merging 
+#' clusters. Clusters containing purely new sequences are also ignored for this 
+#' purpose. At this point, new sequences only connect to the closest non-new 
+#' neighbour (although other options for growth resolutions may exist and be 
+#' implemented).
+#' 
+#' @param seq.info: A set of sequence meta-data coupled to alignment header
 #' @param edge.info: A pairwise edge matrix of all associated headers in seq.info
-#' @param which.new: A set of indices of which sequences were to be labelled "new". this labels certain
-#' @param growth.resolution: The method by which growth is resolved. This ensures new cases don't merge clusters
-#' By default, each new sequence joins a cluster by only it's minimum retrospective
-#' @return A graph, with sequences and edge info. New sequences are only linked by their minimum retrospective edge
+#' @param which.new: Which sequences in seq.info are "new". this is a list of indices.
+#' @param growth.resolution: The method by which growth is resolved. This ensures 
+#' new cases don't merge clusters. By default, each new sequence joins a cluster 
+#' by only it's minimum retrospective edge. 
+#' @return A graph, with sequences and edge info, as well as a growth resolution. 
+#' See graph.ex for a more detailed example with annotated data.
 #' @export
 #' @example examples/create.graph_ex.R
-create.graph <- function(seq.info=data.table(), edge.info, which.new=numeric(0), growth.resolution = minimum.retrospective.edge) {
+create.graph <- function(seq.info=data.table(), edge.info, which.new=numeric(0), 
+                         growth.resolution = minimum.retrospective.edge) {
 
   # Check inputs
   if (nrow(seq.info)==0){
@@ -22,7 +27,8 @@ create.graph <- function(seq.info=data.table(), edge.info, which.new=numeric(0),
     seq.info <- data.table("Header"=colnames(edge.info))
   }
   if (!all(colnames(edge.info) %in% seq.info$Header)) {
-    stop("The pairwise distance matrix does not contain all recognized headers from alignment")
+    stop("The pairwise distance matrix does not contain all recognized headers 
+         from alignment")
   }
 
   # Assemble graph object
@@ -38,12 +44,13 @@ create.graph <- function(seq.info=data.table(), edge.info, which.new=numeric(0),
   return(g)
 }
 
-#' A growth resolution helper.
+#' The default growth resolution helper.
 #'
-#' Ensures that new sequences only join old clusters through their minimum, retrospective edge
+#' Ensures that new sequences only join old clusters through their minimum 
+#' retrospective edge. A growth resolution
 #'
 #' @param g: The input graph
-#' @return A data table matching each new sequence with its closest retrospective neighbour
+#' @return A data table matching each new sequence with its closest neighbour
 minimum.retrospective.edge <- function(g) {
 
   # Find the minimum retrospective edge of each sequence

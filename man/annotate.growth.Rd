@@ -7,16 +7,19 @@
 annotate.growth(t, t.grown, mc.cores = 1)
 }
 \arguments{
-\item{t:}{An inputted tree using ape's tree handling}
+\item{t:}{An inputted tree using ape's tree handling passed by extend.tree}
 
 \item{t.growth:}{A set of trees from pplacer. Each with a newly added tip.}
 
 \item{mc.cores:}{A parallel option}
 }
 \value{
-The input tree annotated with growth information stored as growth.info.
+The growth.info for a given tree. This includes the branch length to the
+newly added terminal node, whether or not the neighbour to the newly added terminal
+node is also terminal, and the branch length to that neighbour, from the newly
+placed internal node (the "PendantLength")
 }
 \description{
-This uses pplacer to ensure that previously defined clusters remain the same.
-New tips are assigned a set of possible placements in the tree.
+This uses pplacer software to ensure that previously defined clusters remain
+the same. New tips are assigned a set of possible placements in the tree.
 }
