@@ -8,11 +8,11 @@ test_that("Tree can be extended with no new seqs or seq.info, throws warning", {
 })
 
 test_that("IQ-TREE  Logfiles can be recognized and translated", {
-  expect_silent(translate.log("../../data/IQTREE_log_ex.txt"))
+  expect_silent(translate.log("../../inst/exdata/IQTREE_log_ex.txt"))
 })
 
 test_that("RAxML Logfiles can be recognized and translated", {
-  expect_silent(translate.log("../../data/RAxML_log_ex.txt"))
+  expect_silent(translate.log("../../inst/exdata/RAxML_log_ex.txt"))
 })
 
 param.list <- lapply(c(-Inf,0.03, Inf), function(x){list("t"=extended.tree.ex, "branch.thresh"=x)})
