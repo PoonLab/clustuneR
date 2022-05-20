@@ -55,7 +55,7 @@ multi.cluster <- function(cluster.method, param.list, mc.cores = 1, rangeID = 0)
 fit.analysis <- function(cluster.data, mc.cores = 1, predictor.transformations = list(),
                          predictive.models = list(
                            "NullModel" = function(x){
-                             glm(Size~Growth, data=x, family="poisson")
+                             glm(Growth~Size, data=x, family="poisson")
                             })) {
   
   # Check inputs
