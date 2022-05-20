@@ -46,8 +46,9 @@ pull.headers <- function(seqs, var.names, var.transformations = list(), sep = "_
 
   seq.info <- dplyr::bind_cols(seq.info)
   colnames(seq.info) <- var.names
-
-  seq.info[, "Header" := names(seqs)]
-
+  
+  seq.info$Header <- names(seqs)
+  #seq.info[, "Header" := names(seqs)]
+  
   return(seq.info)
 }

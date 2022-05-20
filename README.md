@@ -1,5 +1,5 @@
 # clustuneR
-Implementing clustering algorithms on genetic data and finding optimal parameters through the performance of predictive growth models.
+### Implementing clustering algorithms on genetic data and finding optimal parameters through the performance of predictive growth models.
 
 clustuneR builds clusters from inputted sequence alignments and/or phylogenetic trees, allowing users to choose between multiple cluster-building algorithms implemented in the package.
 These algorithms can be further augmented through the selection of parameters, such as a required similarity for cluster formation, or a required level of certainty.
@@ -14,18 +14,43 @@ Pairing cluster-level meta-data, with the growth of clusters is a common goal in
 Furthermore, clustuneR facilitates the assignment of multiple cluster sets from the same data using different methods and parameters.
 Pairing these with the effectiveness of growth models can be useful in method/parameter selection.
 
+#### Installation
 
-## References
-This package includes the binaries for pplacer and guppy (https://matsen.fhcrc.org/pplacer, released under the GPLv3 license), which are used to add new tips onto a fixed tree to simulate cluster growth prospectively. 
+If you have the [`git`](https://git-scm.com/) version control system installed on your computer, you can clone the repository by navigating to a location of your filesystem where the package will be copied, and then running
+```
+git clone https://github.com/PoonLab/clustuneR.git 
+```
 
-* Matsen FA, Kodner RB, Armbrust EV. pplacer: linear time maximum-likelihood and Bayesian phylogenetic placement of sequences onto a fixed reference tree. BMC bioinformatics. 2010 Dec;11(1):1-6.
+If you do not have `git` installed, then you can download the most recent (developmental version) package as a ZIP archive at this link:
+https://github.com/PoonLab/clustuneR/archive/refs/heads/master.zip
 
-As an example, this package includes a subset of a larger published HIV1 pol sequence data set. These sequences were originally studied in publication by Vrancken, et al (2017) and accessible publically on GenBank under the `popset# 1033910942`.
+or from the Releases page:
+https://github.com/PoonLab/clustuneR/releases
 
-* Benson DA, Karsch-Mizrachi I, Lipman DJ, Ostell J, Rapp BA, Wheeler DL. GenBank. Nucleic acids research. 2000 Jan 1;28(1):15-8.
+If you have downloaded a `.zip` or `.tar.gz` archive, you can use `unzip` or `tar -zvxf` on the command line, or double-click on the archive file in your desktop environment.
 
-* Vrancken B, Adachi D, Benedet M, Singh A, Read R, Shafran S, Taylor GD, Simmonds K, Sikora C, Lemey P, Charlton CL. The multi-faceted dynamics of HIV-1 transmission in Northern Alberta: A combined analysis of virus genetic and public health data. Infection, Genetics and Evolution. 2017 Aug 1;52:100-5.
-
+Use `cd clustuneR` to enter the package directory and run the following command to install the package into R:
+```
+R CMD INSTALL .
+```
+You should see something like this on your console:
+```
+* installing to library ‘/Library/Frameworks/R.framework/Versions/4.0/Resources/library’
+* installing *source* package ‘clustuneR’ ...
+** using staged installation
+** R
+** data
+*** moving datasets to lazyload DB
+** inst
+** byte-compile and prepare package for lazy loading
+** help
+*** installing help indices
+** building package indices
+** testing if installed package can be loaded from temporary location
+** testing if installed package can be loaded from final location
+** testing if installed package keeps a record of temporary installation path
+* DONE (clustuneR)
+```
 
 
 ## Example Usage
@@ -33,11 +58,16 @@ As an example, this package includes a subset of a larger published HIV1 pol seq
 #### Setup
 
 To start, we can pull in a tree file and sequence alignment using ape and sequence meta-data as a data-table.
-In order to use pplacer and extend the tree, the tree should be built on a subset of the sequences in the aligment (ex. Excluding sequences from the newest year)
+In order to use pplacer and extend the tree, the tree should be built on a subset of the sequences in the alignment (ex. Excluding sequences from the newest year)
 
+```{r}
+seq.info <- pull.headers(alignment.ex, var.names = c("ID", "CollectionDate", "Subtype"),
+                         var.transformations =list(as.character, as.Date, as.factor))
+```
 
 ```R
-pkgload::load_all()
+setwd("~/git/clustuneR")
+require(clustuneR)  # pkgload::load_all()
 t <- ape::read.tree(<PATH_TO_MY_TREE>)
 seqs <- ape::read.FASTA(<PATH_TO_MY_ALIGNMENT>, type = "DNA")
 seq.info <- data.table::fread(<PATH_TO_MY_SEQUENCE_METADATA>)
@@ -57,9 +87,13 @@ pull.headers(
 ```
 
 At this point the tree in
+
 - **t.extended$growth.info** Summaries of pplacer's sequence placements on the tree (branchlengths, confidence, neighbouring nodes).
+
 - **t.extended$node.info** Summaries of node info max and mean patristic distances under a given node of the tree as well as descendant lists.
+
 - **t.extended$seq.info** Sequence metadata
+
 - **t.extended$path.info** Node-paths between nodes. This is used by some clustering functions
 
 
@@ -112,3 +146,16 @@ res <- fit.analysis(cluster.sets, predictive.models, predictor.transformations)
 AICs <- get.AIC(res)
 AIC_loss <- AICs$TimeModelAIC - AICs$NullModelAIC
 ```
+
+
+## References
+This package includes the binaries for pplacer and guppy (https://matsen.fhcrc.org/pplacer, released under the GPLv3 license), which are used to add new tips onto a fixed tree to simulate cluster growth prospectively. 
+
+* Matsen FA, Kodner RB, Armbrust EV. pplacer: linear time maximum-likelihood and Bayesian phylogenetic placement of sequences onto a fixed reference tree. BMC bioinformatics. 2010 Dec;11(1):1-6.
+
+As an example, this package includes a subset of a larger published HIV-1 *pol* sequence data set. These sequences were originally published in a study by Vrancken *et al.* (2017) and publicly accessible in the GenBank database under the PopSet accession `1033910942`.
+
+* Benson DA, Karsch-Mizrachi I, Lipman DJ, Ostell J, Rapp BA, Wheeler DL. GenBank. Nucleic acids research. 2000 Jan 1;28(1):15-8.
+
+* Vrancken B, Adachi D, Benedet M, Singh A, Read R, Shafran S, Taylor GD, Simmonds K, Sikora C, Lemey P, Charlton CL. The multi-faceted dynamics of HIV-1 transmission in Northern Alberta: A combined analysis of virus genetic and public health data. Infection, Genetics and Evolution. 2017 Aug 1;52:100-5.
+
