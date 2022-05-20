@@ -18,10 +18,8 @@
 extend.tree <- function(t, seq.info=data.table(), mc.cores = 1, log.file=NA, 
                         full.align=character(0), locus = "LOCUS") {
 
-  # Root the tree (if unrooted) and resolve multichotomies
-  if (!ape::is.rooted(t)) {
-    t <- phangorn::midpoint(t)
-  }
+  # Midpoint root for consistency and resolve multichotomies
+  t <- phangorn::midpoint(t)
   t <- ape::multi2di(t)
 
   # Check Sequence names inputs
