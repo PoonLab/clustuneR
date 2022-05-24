@@ -128,7 +128,7 @@ param.list <- list(
 cluster.sets <- multi.cluster(step.cluster, param.list) 
 ```
 
-At this point the tree in
+At this point the tree contains
 
 - **t.extended$growth.info** Summaries of pplacer's sequence placements on the tree (branchlengths, confidence, neighbouring nodes).
 
@@ -174,10 +174,10 @@ A minimal example involves looking at the AIC loss obtained when switching from 
 ```R
 predictive.models = list(
     "NullModel" = function(x){
-        glm(Growth ~ Size, data=x, family="poisson")
+        glm(Growth~Size, data=x, family="poisson")
     },
     "TimeModel" = function(x){
-        glm(Growth ~ Size+coldate, data=x, family="poisson")
+        glm(Growth~Size+Diagnostic_Year, data=x, family="poisson")
     }
 )
 predictor.transformations = list(
