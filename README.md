@@ -86,7 +86,7 @@ pull.headers(
 )
 ```
 
-At this point the tree in
+At this point the tree contains
 
 - **t.extended$growth.info** Summaries of pplacer's sequence placements on the tree (branchlengths, confidence, neighbouring nodes).
 
