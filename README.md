@@ -85,7 +85,7 @@ param.list <- lapply(seq(0.001, 0.04, 0.001), function(x) list(t=phy.extend, bra
 cluster.sets <- multi.cluster(step.cluster, param.list) 
 
 
-predictive.models = list(
+p.models = list(
     "NullModel" = function(x){
         glm(Growth~Size, data=x, family="poisson")
     },
@@ -93,9 +93,14 @@ predictive.models = list(
         glm(Growth~Size+coldate, data=x, family="poisson")
     }
 )
-predictor.transformations = list(
+p.trans = list(
     "coldate" = function(x){mean(x)}
 )
+
+res <- fit.analysis(cluster.sets, predictive.models=p.models, 
+                    predictor.transformations=p.trans)
+AICs <- get.AIC(res)
+AIC_loss <- AICs$TimeModelAIC - AICs$NullModelAIC
 ```
 
 old example:

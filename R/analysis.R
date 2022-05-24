@@ -83,9 +83,8 @@ fit.analysis <- function(cluster.data, mc.cores = 1, predictor.transformations =
 
   # Obtain fit data for each cluster set
   model.fits <- lapply(setIDs, function(sid) {
-    DT <- model.data[SetID == sid, ]
     lapply(predictive.models, function(pmod) {
-      suppressWarnings(list(pmod(DT)))
+      suppressWarnings(list(pmod(model.data[SetID == sid, ])))
     })  # this could be run in parallel
   })
   cluster.analysis <- data.table::data.table(
@@ -122,13 +121,11 @@ get.AIC <- function(cluster.analysis){
   }
   model.fits <- cluster.analysis[,.SD, .SDcols = which.models]
 
-  #Return specifically aic as a new data.table
-  newnms <- sapply(names(which.models), function(nm){paste0(nm,"AIC")})
-  
   aic.analysis <- as.data.frame(sapply(1:length(which.models), function(idx) {
     sapply(model.fits[[names(which.models)[idx]]], function(x) x$aic)
   }))
-  names(aic.analysis) <- names(which.models)
+  names(aic.analysis) <- sapply(names(which.models), function(nm) {
+    paste0(nm, "AIC")})
 
   return(aic.analysis)
 }
