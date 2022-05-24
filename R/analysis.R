@@ -82,17 +82,20 @@ fit.analysis <- function(cluster.data, mc.cores = 1, predictor.transformations =
   }
 
   # Obtain fit data for each cluster set
-  cluster.analysis <- dplyr::bind_rows(
-    parallel::mclapply(setIDs, function(id) {
-      DT <- model.data[SetID == id, ]
-
-      res <- data.table::data.table("SetID" = DT[1, SetID], "RangeID" = DT[1, RangeID])
-      res[, (mod.names) := lapply(predictive.models, function(pmod){
-        suppressWarnings(list(pmod(DT)))
-      })]
-      return(res)
-    }, mc.cores = mc.cores)
-  )
+  model.fits <- lapply(setIDs, function(sid) {
+    DT <- model.data[SetID == sid, ]
+    lapply(predictive.models, function(pmod) {
+      suppressWarnings(list(pmod(DT)))
+    })  # this could be run in parallel
+  })
+  cluster.analysis <- data.table::data.table(
+    SetID=setIDs, 
+    RangeID=sapply(split(model.data$RangeID, model.data$SetID), function(x) x[1])
+    )
+  # append model fits
+  for (mod in 1:length(mod.names)) {
+    cluster.analysis[[mod.names[mod]]] <- sapply(model.fits, function(x) x[[mod]])
+  }
 
   return(cluster.analysis)
 }
@@ -121,10 +124,11 @@ get.AIC <- function(cluster.analysis){
 
   #Return specifically aic as a new data.table
   newnms <- sapply(names(which.models), function(nm){paste0(nm,"AIC")})
-  aic.analysis <- data.table::data.table()
-  aic.analysis[,(newnms) := lapply(names(which.models), function(nm){
-    sapply(model.fits[,get(nm)], function(x){x$aic})
-  })]
+  
+  aic.analysis <- as.data.frame(sapply(1:length(which.models), function(idx) {
+    sapply(model.fits[[names(which.models)[idx]]], function(x) x$aic)
+  }))
+  names(aic.analysis) <- names(which.models)
 
   return(aic.analysis)
 }

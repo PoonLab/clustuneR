@@ -14,7 +14,11 @@ Pairing cluster-level meta-data, with the growth of clusters is a common goal in
 Furthermore, clustuneR facilitates the assignment of multiple cluster sets from the same data using different methods and parameters.
 Pairing these with the effectiveness of growth models can be useful in method/parameter selection.
 
+
+
 #### Installation
+
+> Because clustuneR uses [pplacer](https://github.com/matsen/pplacer/) to graft new sequences onto a phylogenetic tree, it can currently only be run on Linux systems.
 
 If you have the [`git`](https://git-scm.com/) version control system installed on your computer, you can clone the repository by navigating to a location of your filesystem where the package will be copied, and then running
 ```
@@ -58,16 +62,44 @@ You should see something like this on your console:
 #### Setup
 
 To start, we can pull in a tree file and sequence alignment using ape and sequence meta-data as a data-table.
-In order to use pplacer and extend the tree, the tree should be built on a subset of the sequences in the alignment (ex. Excluding sequences from the newest year)
-
-```{r}
-seq.info <- pull.headers(alignment.ex, var.names = c("ID", "CollectionDate", "Subtype"),
-                         var.transformations =list(as.character, as.Date, as.factor))
-```
+In order to use pplacer and extend the tree, the tree should be built on a subset of the sequences in the alignment, *i.e.*, excluding sequences from the newest year.
 
 ```R
 setwd("~/git/clustuneR")
 require(clustuneR)  # pkgload::load_all()
+
+phy <- ape::read.tree("data/old.treefile")
+seqs <- ape::read.FASTA("data/na.fasta", type="DNA")
+
+# parse sequence headers (alternatively import from another file)
+seq.info <- pull.headers(seqs, sep="_", var.names=c('accession', 'coldate', 'subtype'),
+var.transformations=c(as.character, as.Date, as.factor))
+
+# use pplacer to graft new sequences onto old tree
+phy.extend <- extend.tree(phy, seq.info, seqs, mc.cores=4, log.file="data/old.log")
+
+# generate cluster sets under varying parameter settings
+param.list <- lapply(seq(0.001, 0.04, 0.001), function(x) list(t=phy.extend, branch.thresh=x, boot.thresh=0.95))
+
+# has variables Size, Growth, 
+cluster.sets <- multi.cluster(step.cluster, param.list) 
+
+
+predictive.models = list(
+    "NullModel" = function(x){
+        glm(Growth~Size, data=x, family="poisson")
+    },
+    "TimeModel" = function(x){
+        glm(Growth~Size+coldate, data=x, family="poisson")
+    }
+)
+predictor.transformations = list(
+    "coldate" = function(x){mean(x)}
+)
+```
+
+old example:
+```
 t <- ape::read.tree(<PATH_TO_MY_TREE>)
 seqs <- ape::read.FASTA(<PATH_TO_MY_ALIGNMENT>, type = "DNA")
 seq.info <- data.table::fread(<PATH_TO_MY_SEQUENCE_METADATA>)
@@ -84,6 +116,16 @@ pull.headers(
     var.names = c("Sample_ID", "Collection_Year", "Diagnostic_Year", "Age"), 
     var.transformations = list(as.character, as.numeric, as.numeric, as.numeric)
 )
+
+param.list <- list(
+    list(t = t.extended, branch.thresh = 0.040, boot.thresh = 0.95),
+    list(t = t.extended, branch.thresh = 0.030, boot.thresh = 0.95),
+    list(t = t.extended, branch.thresh = 0.015, boot.thresh = 0.95),
+    list(t = t.extended, branch.thresh = 0.040, boot.thresh = 0),   
+    list(t = t.extended, branch.thresh = 0.030, boot.thresh = 0),
+    list(t = t.extended, branch.thresh = 0.015, boot.thresh = 0),
+)
+cluster.sets <- multi.cluster(step.cluster, param.list) 
 ```
 
 At this point the tree in
@@ -99,7 +141,7 @@ At this point the tree in
 
 #### Clustering
 
-Different clustering methods are under developement within clustuneR. For trees using pplacer, the `step.cluster` function should be used.
+Different clustering methods are under development within clustuneR. For trees using pplacer, the `step.cluster` function should be used.
 The parameters are modifiable for each clustering method and a fast `multi.cluster` function can take in many many parameter sets at once to output many sets of clusters.
 
 ```R
@@ -132,14 +174,14 @@ A minimal example involves looking at the AIC loss obtained when switching from 
 ```R
 predictive.models = list(
     "NullModel" = function(x){
-        glm(Size~Growth, data=x, family="poisson")
+        glm(Growth ~ Size, data=x, family="poisson")
     },
     "TimeModel" = function(x){
-        glm(Size+Diagnostic_Year~Growth, data=x, family="poisson")
+        glm(Growth ~ Size+coldate, data=x, family="poisson")
     }
 )
 predictor.transformations = list(
-    "TimeModel" = function(x){mean(x)}
+    "coldate" = function(x){mean(x)}
 )
 
 res <- fit.analysis(cluster.sets, predictive.models, predictor.transformations)
