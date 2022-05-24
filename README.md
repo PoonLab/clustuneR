@@ -132,10 +132,10 @@ A minimal example involves looking at the AIC loss obtained when switching from 
 ```R
 predictive.models = list(
     "NullModel" = function(x){
-        glm(Size~Growth, data=x, family="poisson")
+        glm(Growth~Size, data=x, family="poisson")
     },
     "TimeModel" = function(x){
-        glm(Size+Diagnostic_Year~Growth, data=x, family="poisson")
+        glm(Growth~Size+Diagnostic_Year, data=x, family="poisson")
     }
 )
 predictor.transformations = list(
