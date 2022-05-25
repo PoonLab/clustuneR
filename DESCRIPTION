@@ -24,7 +24,8 @@ Imports:
   dplyr (>= 0.8.3), 
   digest (>= 0.6.25),
   jsonlite (>= 1.7.2),  
-  phangorn (>= 0.7-70)
+  phangorn (>= 0.7-70),
+  phytools (>= 1.0-3)
 Depends: 
   data.table (>= 1.12.4), 
   R (>= 3.6.3)

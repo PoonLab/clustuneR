@@ -19,7 +19,7 @@ extend.tree <- function(t, seq.info=data.table(), mc.cores = 1, log.file=NA,
                         full.align=character(0), locus = "LOCUS") {
 
   # Midpoint root for consistency and resolve multichotomies
-  t <- phangorn::midpoint(t)
+  t <- phytools::midpoint.root(t)
   t <- ape::multi2di(t)
 
   # Check Sequence names inputs
