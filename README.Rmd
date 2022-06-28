@@ -66,23 +66,27 @@ You should see something like this on your console:
 ```
 
 
-## Example Usage
+## Usage example
 
-#### Setup
+### Building a tree
 
 We start with a multiple sequence alignment of sequences that are labelled with sample collection dates.
 An example of anonymized public domain HIV-1 sequences from a study based in northern Alberta (Canada) is provided in `data/na.fasta`.
 First, we use an R script to exclude the sequences collected in the most recent year:
-```{r}
+```{r message=FALSE}
 require(clustuneR)
 require(ape)
 require(lubridate)
 
 setwd("~/git/clustuneR")
-fasta <- read.FASTA("data/na.fasta")
-coldates <- as.Date(sapply(names(fasta), function(x) strsplit(x, "_")[[1]][2]))
-max.year <- max(year(coldates))
-old.seqs <- fasta[year(coldates) < max.year]
+seqs <- ape::read.FASTA("data/na.fasta", type="DNA")
+
+# parse sequence headers (alternatively import from another file)
+seq.info <- pull.headers(seqs, sep="_", var.names=c('accession', 'coldate', 'subtype'),
+var.transformations=c(as.character, as.Date, as.factor))
+
+max.year <- max(year(seq.info$coldate))
+old.seqs <- seqs[year(seq.info$coldate) < max.year]
 write.FASTA(old.seqs, file="data/na-old.fasta")
 ```
 
@@ -91,22 +95,21 @@ Next, we use IQ-TREE to reconstruct a maximum likelihood tree relating the "old"
 iqtree -bb 1000 -m GTR -nstop 200 -s na-old.fasta
 ```
 Note we've specified the generalized time reversible model of nucleotide substitution to bypass the model selection stage.
-Even so, this is a time-consuming step - to speed things up, we've provided IQ-TREE output files at `data/na.nwk` and `data/nwk.log`.
+Even so, this is a time-consuming step - to speed things up, we've provided IQ-TREE output files at `data/na.nwk` and `data/na.log`.
 
+
+### Grafting new sequences
 
 Next, we import both the sequence alignment and the ML tree into R.
 We will use `clustuneR` to graft the sequences from the most recent year using the program `pplacer` and the output files from IQ-TREE.
-```{r}
+```{r warning=FALSE}
 phy <- ape::read.tree("data/na.nwk")
-seqs <- ape::read.FASTA("data/na.fasta", type="DNA")
-
-# parse sequence headers (alternatively import from another file)
-seq.info <- pull.headers(seqs, sep="_", var.names=c('accession', 'coldate', 'subtype'),
-var.transformations=c(as.character, as.Date, as.factor))
 
 # use pplacer to graft new sequences onto old tree
-phy.extend <- extend.tree(phy, seq.info, seqs, mc.cores=4, log.file="data/old.log")
+phy.extend <- extend.tree(phy, seq.info, seqs, mc.cores=4, log.file="data/na.log")
 ```
+
+### Finding the optimal threshold
 
 Next, we want to configure `clustuneR` to fit two Poisson regression models to the distribution of new cases among clusters, for a range of genetic distance thresholds:
 ```{r}
@@ -123,7 +126,7 @@ p.models = list(
         glm(Growth~Size+coldate, data=x, family="poisson")
     }
 )
-p.trans = list(
+p.trans = list(  # average sample collection dates across nodes in each cluster
     "coldate" = function(x){mean(x)}
 )
 
@@ -135,9 +138,20 @@ delta.AIC <- AICs$TimeModelAIC - AICs$NullModelAIC
 
 We can visualize the difference in AICs between models as a function of the distance threshold:
 ```{r}
-
+cutoffs <- sapply(param.list, function(x) x$branch.thresh)
+par(mar=c(5,5,1,1))
+plot(cutoffs, delta.AIC, type='l', col='cadetblue', lwd=2)
+abline(h=0, lty=2)
 ```
+
+### Explanation
+
 The optimal distance threshold is associated with the lowest value of `delta.AIC`.
+We expect that adding information on sample collection dates should improve our ability to predict where the next infections will occur.
+However, this improvement will depend on how we have partitioned the database of known infections into clusters.
+If every known infection is merged into a single giant cluster, then there is no meaningful way to predict where new cases will occur, since there is no variation for a sample of one cluster.
+If every infection each becomes a cluster of one, then there will be excessive information loss due to random variation in sampling dates.
+At the threshold that minimizes `delta.AIC`, the known infections are partitioned into clusters in such a way that minimizes the information loss associated with incorporating sample dates into the predictive model.
 
 
 ## References
