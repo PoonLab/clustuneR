@@ -1,3 +1,12 @@
+---
+title: "README"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
 # clustuneR
 ### Implementing clustering algorithms on genetic data and finding optimal parameters through the performance of predictive growth models.
 
@@ -64,9 +73,12 @@ You should see something like this on your console:
 We start with a multiple sequence alignment of sequences that are labelled with sample collection dates.
 An example of anonymized public domain HIV-1 sequences from a study based in northern Alberta (Canada) is provided in `data/na.fasta`.
 First, we use an R script to exclude the sequences collected in the most recent year:
-```R
+```{r}
+require(clustuneR)
 require(ape)
 require(lubridate)
+
+setwd("~/git/clustuneR")
 fasta <- read.FASTA("data/na.fasta")
 coldates <- as.Date(sapply(names(fasta), function(x) strsplit(x, "_")[[1]][2]))
 max.year <- max(year(coldates))
@@ -84,10 +96,7 @@ Even so, this is a time-consuming step - to speed things up, we've provided IQ-T
 
 Next, we import both the sequence alignment and the ML tree into R.
 We will use `clustuneR` to graft the sequences from the most recent year using the program `pplacer` and the output files from IQ-TREE.
-```R
-setwd("~/git/clustuneR")
-require(clustuneR)  # pkgload::load_all()
-
+```{r}
 phy <- ape::read.tree("data/na.nwk")
 seqs <- ape::read.FASTA("data/na.fasta", type="DNA")
 
@@ -100,7 +109,7 @@ phy.extend <- extend.tree(phy, seq.info, seqs, mc.cores=4, log.file="data/old.lo
 ```
 
 Next, we want to configure `clustuneR` to fit two Poisson regression models to the distribution of new cases among clusters, for a range of genetic distance thresholds:
-```R
+```{r}
 # generate cluster sets under varying parameter settings
 param.list <- lapply(seq(0.001, 0.04, 0.001), function(x) list(t=phy.extend, branch.thresh=x, boot.thresh=0.95))
 cluster.sets <- multi.cluster(step.cluster, param.list) 
@@ -125,7 +134,7 @@ delta.AIC <- AICs$TimeModelAIC - AICs$NullModelAIC
 ```
 
 We can visualize the difference in AICs between models as a function of the distance threshold:
-```R
+```{r}
 
 ```
 The optimal distance threshold is associated with the lowest value of `delta.AIC`.
