@@ -1,6 +1,3 @@
-README
-================
-
 # clustuneR
 
 ### Implementing clustering algorithms on genetic data and finding optimal parameters through the performance of predictive growth models.
