@@ -29,7 +29,7 @@ using different methods and parameters. Pairing these with the
 effectiveness of growth models can be useful in method/parameter
 selection.
 
-#### Installation
+## Installation
 
 > Because clustuneR uses [pplacer](https://github.com/matsen/pplacer/)
 > to graft new sequences onto a phylogenetic tree, it can currently only
