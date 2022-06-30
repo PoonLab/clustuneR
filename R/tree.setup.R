@@ -95,13 +95,11 @@ annotate.nodes <- function(t, mc.cores = 1) {
   # Store node info in data.table
   node.info <- data.table::data.table()
   node.info[, "NodeID" := nodes]
-  node.info[, "Bootstrap" := c(rep(100, length(t$tip.label)), as.numeric(t$node.label))]
-
-  node.info[
-    is.na(Bootstrap),
-    "Bootstrap" := 10^ceiling(log10(max(node.info$Bootstrap[!is.na(node.info$Bootstrap)])))
-  ]
-  node.info[, "Bootstrap" := (node.info$Bootstrap) / max(node.info$Bootstrap)]
+  node.info[, "Bootstrap" := sapply(c(rep("1", length(t$tip.label)), t$node.label), function(x){
+    ifelse(!grepl("[0-9|/.]", x), as.numeric(x), 1)
+  })] 
+  node.info[,"Bootstrap" := node.info[,"Bootstrap"]/max(node.info[,"Bootstrap"])]
+  
 
   # Get descendant information for each node
   des <- phangorn::Descendants(t, type = "all")
