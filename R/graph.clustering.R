@@ -44,7 +44,9 @@ component.cluster <- function(g, dist.thresh = 0, setID = 0) {
   cluster.set[, "Size" := length(V1[[1]]), by = 1:nrow(cluster.set)]
   colnames(cluster.set) <- c("ClusterID", seq.cols, "Size")
   cluster.set$New <- NULL
-
+  
+  cluster.set <- cluster.set[order(ClusterID),]
+  
   # Attach growth info and set ID
   growth <- table(g$seq.info[(New) & (Cluster %in% cluster.set$ClusterID), Cluster])
   cluster.set[, "Growth" := 0]

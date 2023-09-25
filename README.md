@@ -221,6 +221,16 @@ g <- create.graph(seq.info, edge.info, which.new)
 # generate cluster sets under varying parameter settings
 param.list <- lapply(seq(0.001, 0.04, 0.001), function(x) {list(g=g, dist.thresh=x)})
 cluster.sets <- multi.cluster(component.cluster, param.list) 
+
+res <- fit.analysis(cluster.sets, predictive.models=p.models, 
+                    predictor.transformations=p.trans)
+AICs <- get.AIC(res)
+delta.AIC <- AICs$TimeModelAIC - AICs$NullModelAIC
+
+cutoffs <- sapply(param.list, function(x) x$dist.thresh)
+par(mar=c(5,5,1,1))
+plot(cutoffs, delta.AIC, type='l', col='cadetblue', lwd=2)
+abline(h=0, lty=2)
 ```
 
 ## References
