@@ -17,7 +17,6 @@ component.cluster <- function(g, dist.thresh = 0, setID = 0) {
   # Filter edges above the distance threshold and prepare for component finding algorithm
   # All edges from a new sequence are filtered except for their "growth-resolved" edge
   filtered.edges <- g$edge.info <= dist.thresh
-  diag(filtered.edges) <- F
   filtered.edges[which(g$seq.info$New), ] <- F
   filtered.edges[,which(g$seq.info$New)]  <- F
   filtered.edges[g$growth.resolved$NewHeader, g$growth.resolved$OldHeader] <-
@@ -40,7 +39,6 @@ component.cluster <- function(g, dist.thresh = 0, setID = 0) {
         return(min(x))
       }
     })]
-    print(g$seq.info[which(g$seq.info$Cluster != previous.cluster)])
   }
 
   cluster.set <- g$seq.info[!(New), lapply(seq.cols, function(nm) {
