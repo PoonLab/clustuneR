@@ -38,7 +38,12 @@ multi.cluster <- function(cluster.method, param.list, mc.cores = 1, rangeID = 0)
 #' cluster set. Multiple models can be inputted as a named list of functions taking 
 #' in cluster data (see example)
 #'
-#' @param cluster.data: Inputted set(s) of clusters. Possibly multiple ranges
+#' @param cluster.data: data.table, Inputted set(s) of clusters. Possibly multiple ranges
+#' The following columns are required:
+#'   Size: The number of sequences in clusters, not including new growth sequences.
+#'   Growth: The number of new sequences added to the cluster.
+#'   SetID: unique identifier for a set of clusters (obtained under given criteria)
+#'   RangeID: 
 #' @param mc.cores: A parallel option to increase run speed
 #' @param predictor.transformations: A named list of transformation functions for 
 #' each predictor variable (ex. list("Data"==sum). Because clustered meta data takes 

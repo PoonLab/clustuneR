@@ -1,22 +1,30 @@
+require(igraph)
+
 #' Create clusters based on the components of a graph
 #'
 #' Edges are filtered away using a distance threshold to break up the completely 
 #' connected graph such that only similar edges remain.
 #'
-#' @param g: The input graph, annotated with vertex, edge, and growth resolution
-#' information
-#' @param dist.thresh: The maximum distance defining which edges are filtered.
-#' A higher distance threshold implies a larger average cluster size
+#' @param obj: S3 object of class clusData.  Contains vertex, edge and growth 
+#' resolution information.
+#' @param dist.thresh: double, the maximum distance defining which edges are 
+#' filtered. A higher distance threshold implies a larger average cluster size
 #' @param setID: A numeric identifier for this cluster set.
 #' @return A set of clusters as a data.table. See example cluster.ex object 
 #' documentation for an example of clustered sequence data + meta data
 #' @export
 #' @example examples/component.cluster_ex.R
-component.cluster <- function(g, dist.thresh = 0, setID = 0) {
+component.cluster <- function(obj, dist.thresh = 0, setID = 0) {
 
   # Filter edges above the distance threshold and prepare for component finding algorithm
   # All edges from a new sequence are filtered except for their "growth-resolved" edge
-  filtered.edges <- g$edge.info <= dist.thresh
+  filtered.edges <- obj$edge.info[obj$edge.info$Distance <= dist.thresh, ]
+  
+  g <- graph_from_edgelist(as.matrix(filtered.edges[c("ID1", "ID2")]), directed=FALSE)
+  comps <- components(g)
+  
+  
+  
   filtered.edges[which(g$seq.info$New), ] <- F
   filtered.edges[,which(g$seq.info$New)]  <- F
   filtered.edges[g$growth.resolved$NewHeader, g$growth.resolved$OldHeader] <-

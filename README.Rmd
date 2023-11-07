@@ -82,7 +82,7 @@ setwd("~/git/clustuneR")
 seqs <- ape::read.FASTA("data/na.fasta", type="DNA")
 
 # parse sequence headers (alternatively import from another file)
-seq.info <- pull.headers(seqs, sep="_", var.names=c('accession', 'coldate', 'subtype'),
+seq.info <- parse.headers(names(seqs), sep="_", var.names=c('accession', 'coldate', 'subtype'),
 var.transformations=c(as.character, as.Date, as.factor))
 
 max.year <- max(year(seq.info$coldate))

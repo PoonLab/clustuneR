@@ -11,7 +11,7 @@
 
 #' An example set of sequence meta.data corresponding to alignment.ex
 #'
-#' Built from alignment.ex, the example 10 sequence alignment using pull.headers. 
+#' Built from alignment.ex, the example 10 sequence alignment using parse.headers. 
 #' The date of each sequence's collection, it's genbank unique accession ID, and 
 #' sequence subtype are referenced within the header
 #'
