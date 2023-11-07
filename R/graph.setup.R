@@ -8,22 +8,24 @@
 #' neighbour (although other options for growth resolutions may exist and be 
 #' implemented).
 #' 
-#' @param seq.info: A set of sequence meta-data coupled to alignment header
-#' @param edge.info: A pairwise edge matrix of all associated headers in seq.info
-#' @param which.new: Which sequences in seq.info are "new". this is a list of indices.
-#' @param growth.resolution: The method by which growth is resolved. This ensures 
+#' @param seq.info: data.table, A set of sequence meta-data coupled to alignment header
+#'                  Must contain a Header column of sequence labels
+#' @param edge.info: matrix, A pairwise edge matrix of all associated headers in seq.info
+#' @param which.new: integer, Which sequences in seq.info are "new". this is a list of indices.
+#' @param growth.resolution: function, The method by which growth is resolved. This ensures 
 #' new cases don't merge clusters. By default, each new sequence joins a cluster 
 #' by only it's minimum retrospective edge. 
-#' @return A graph, with sequences and edge info, as well as a growth resolution. 
+#' @return list, A compact representation of a graph, with sequences and edge info, 
+#' as well as a growth resolution. 
 #' See graph.ex for a more detailed example with annotated data.
 #' @export
 #' @example examples/create.graph_ex.R
 create.graph <- function(seq.info=data.table(), edge.info, which.new=numeric(0), 
                          growth.resolution = minimum.retrospective.edge) {
-
   # Check inputs
   if (nrow(seq.info)==0){
-    warning("No sequence meta-data included, creating default seq.info input from headers in edge.info")
+    warning("No sequence meta-data included, creating default seq.info input ",
+            "from headers in edge.info")
     seq.info <- data.table("Header"=colnames(edge.info))
   }
   if (!all(colnames(edge.info) %in% seq.info$Header)) {
