@@ -62,9 +62,15 @@ create.graph <- function(seq.info, edge.info, which.new=numeric(0),
   }
   class(obj) <- "clusData"
   
-  # resolve single edges between old and new cases
-  obj$growth.resolved <- growth.resolution(obj)
-
+  # save resolved single edges between old and new cases
+  resolved.edges <- obj$edge.info[growth.resolution(obj), ]
+  
+  # remove all edges involving new cases
+  new.seqs <- which(obj$seq.info$New)
+  obj$edge.info <- obj$edge.info[!(obj$edge.info$ID1 %in% new.seqs | 
+                                     obj$edge.info$ID2 %in% new.seqs), ]
+  obj$edge.info <- rbind(obj$edge.info, resolved.edges)
+  
   return(obj)
 }
 
