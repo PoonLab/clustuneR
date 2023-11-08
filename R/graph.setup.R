@@ -24,20 +24,12 @@
 #' See graph.ex for a more detailed example with annotated data.
 #' @export
 #' @example examples/create.graph_ex.R
-create.graph <- function(seq.info=data.frame(), edge.info, which.new=numeric(0), 
+create.graph <- function(seq.info, edge.info, which.new=numeric(0), 
                          growth.resolution = minimum.retrospective.edge) {
   # Check inputs
   if (!all(c("ID1", "ID2", "Distance") %in% names(edge.info))) {
     stop("edge.info must contain columns `ID1`, `ID2` and `Distance`.")
   }
-  
-  if (nrow(seq.info)==0){
-    warning("No sequence meta-data included, creating default seq.info input ",
-            "from headers in edge.info")
-    headers <- unique(c(edge.info$ID1, edge.info$ID2))
-    seq.info <- data.frame(Header=colnames(edge.info))
-  }
-
   if (!all(unique(c(edge.info$ID1, edge.info$ID2)) %in% seq.info$Header)) {
     stop("edge.info contains ID1 or ID2 strings that are not found in seq.info$Header")
   }
@@ -68,10 +60,10 @@ create.graph <- function(seq.info=data.frame(), edge.info, which.new=numeric(0),
   if (!any(obj$seq.info$New)) {
     stop("At least one sequence must be marked as New, detected none.")
   }
-
-  # identify edges between old and new cases
-  obj$growth.resolved <- growth.resolution(obj)
   class(obj) <- "clusData"
+  
+  # resolve single edges between old and new cases
+  obj$growth.resolved <- growth.resolution(obj)
 
   return(obj)
 }
@@ -85,7 +77,7 @@ create.graph <- function(seq.info=data.frame(), edge.info, which.new=numeric(0),
 #' @param obj: S3 object of class clusData from create.graph
 #' @return integer, vector of row indices into g$edge.info
 minimum.retrospective.edge <- function(obj) {
-  stopifnot(all(c("ID1", "ID2", "Distance") %in% names(obj$edge.info)))
+  stopifnot(class(obj) == "clusData")
 
   # Find the minimum retrospective edge of each sequence
   new.seqs <- which(obj$seq.info$New)
@@ -106,3 +98,13 @@ minimum.retrospective.edge <- function(obj) {
 }
 
 #TODO: what are some other ways of resolving growth?  random?  closest in date?
+
+print.clusData <- function(obj) {
+  cat("clusData S3 object (")
+  cat(paste(nrow(obj$seq.info), " nodes, ", nrow(obj$edge.info), " edges)\n\n", sep=""))
+  cat(paste(sum(obj$seq.info$New)), " new nodes\n\n", sep="")
+  cat("seq.info:\n")
+  print(head(obj$seq.info))
+  cat("\nedge.info:\n")
+  print(head(obj$edge.info))
+}
