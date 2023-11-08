@@ -22,7 +22,9 @@ component.cluster <- function(obj, dist.thresh = 0, setID = 0) {
   
   g <- graph_from_edgelist(as.matrix(filtered.edges[c("ID1", "ID2")]), directed=FALSE)
   comps <- components(g)
-  
+  for (cidx in 1:comps$no) {
+    
+  }
   
   
   filtered.edges[which(g$seq.info$New), ] <- F
