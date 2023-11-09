@@ -23,8 +23,10 @@ component.cluster <- function(obj, dist.thresh=0, setID=0) {
   
   # graph_from_edgelist interprets edge list as vertex IDs so it will tend to 
   # omit some number of nodes with no edges past filter
-  orphans <- seq(max(V(g))+1, nrow(obj$seq.info))
-  g <- add_vertices(g, length(orphans))
+  if (length(V(g)) < nrow(obj$seq.info)) {
+    orphans <- seq(max(V(g))+1, nrow(obj$seq.info))
+    g <- add_vertices(g, length(orphans))  
+  }
   
   # extract network components
   comps <- components(g)
