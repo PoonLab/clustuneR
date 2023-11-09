@@ -1,3 +1,6 @@
+require(phytools)
+require(ape)
+
 #' Prepare a tree for clustering
 #'
 #' Extends an ape tree object to include annotated node and path information.
@@ -6,7 +9,7 @@
 #' including the binaries of pplacer and guppy software installed with this package
 #' (Matsen, 2010)
 #'
-#' @param t: An inputted tree using ape's tree handling. Un-extended.
+#' @param phy:  ape::phylo object.  Un-extended.
 #' @param seq.info: A data frame or data.table object containing the sequences.
 #' New sequences are assigned as those not in the tree.
 #' @param log.file: A path to the logfile from a tree construction run
@@ -15,65 +18,74 @@
 #' @return The tree annotated with node information and seq.info
 #' @export
 #' @example examples/extend.tree_ex.R
-extend.tree <- function(t, seq.info=data.table(), mc.cores = 1, log.file=NA, 
-                        full.align=character(0), locus = "LOCUS") {
+extend.tree <- function(phy, seq.info=data.frame(), full.align=character(0), 
+                        mc.cores=1, log.file=NA, locus = "LOCUS") {
 
   # Midpoint root for consistency and resolve multichotomies
-  t <- phytools::midpoint.root(t)
-  t <- ape::multi2di(t)
+  phy <- phytools::midpoint.root(phy)
+  phy <- ape::multi2di(phy)
 
   # Check Sequence names inputs
-  if (nrow(seq.info)==0){
-    if(length(full.align)!=0){
-      warning("No sequence meta-data included, creating default seq.info input from headers in alignment")
-      seq.info <- data.table("Header"=names(full.align)) 
-    }else{
-      warning("No sequence meta-data included, creating default seq.info input from tree tip.labels")
-      seq.info <- data.table("Header"=t$tip.label) 
+  if (nrow(seq.info) == 0){
+    if(length(full.align) != 0){
+      warning("No sequence meta-data included, creating default seq.info input",
+              "from headers in alignment")
+      seq.info <- data.frame("Header"=names(full.align)) 
+    } else {
+      warning("No sequence meta-data included, creating default seq.info input", 
+              "from tree tip.labels")
+      seq.info <- data.frame("Header"=phy$tip.label) 
     }
   }
+  
   var.names <- colnames(seq.info)
   if (!("Header" %in% var.names)) {
-    stop("Header must be contained within var.names")
-  } else {
+    stop("Data frame `var.name` must contain Header")
+  } 
+  else {
     if (length(unique(seq.info[, "Header"])) != length(seq.info[, "Header"])) {
       seq.info <- seq.info[!duplicated(Header), ]
       warning("Duplicate Headers have been arbitrarily removed")
     }
-    if (!all(t$tip.label %in% seq.info$Header)) {
+    if (!all(phy$tip.label %in% seq.info$Header)) {
       stop("At least 1 tip labels in tree is not represent seq.labels")
     }
   }
-  which.new <- which(!(seq.info$Header %in% t$tip.label))
-  seq.info[,"New":=F]
-  seq.info[which.new,"New":=T]
+  
+  # label new sequences
+  seq.info$New <- FALSE
+  which.new <- which(!(seq.info$Header %in% phy$tip.label))
+  seq.info$New[which.new] <- TRUE
 
-  t$seq.info <- seq.info
+  phy$seq.info <- seq.info
 
-  t$node.info <- annotate.nodes(t, mc.cores)
-  t$path.info <- annotate.paths(t)
+  phy$node.info <- annotate.nodes(phy, mc.cores)
+  phy$path.info <- annotate.paths(phy)
 
-  #Extend with growth_info
-  if(is.na(log.file)|(length(full.align)==0)) {
-    warning("Ignoring growth information, path to logfile and full sequence alignment required.")
-    t$growth.info <- data.table::data.table(
-      "Header" = character(0), "NeighbourDes" = numeric(0), "Bootstrap" = numeric(0),
-      "TermDistance" = numeric(0), "PendantDistance" = numeric(0), "Terminal" = logical(0)
+  # Extend with growth_info
+  if(is.na(log.file) | (length(full.align)==0)) {
+    warning("Ignoring growth information, path to logfile and full sequence ", 
+            "alignment required.")
+    phy$growth.info <- data.frame(
+      "Header"=character(0), "NeighbourDes"=numeric(0), "Bootstrap"=numeric(0),
+      "TermDistance"=numeric(0), "PendantDistance"=numeric(0), "Terminal"=logical(0)
     )
-  } else {
-
-    if(!all(names(full.align)%in%seq.info$Header)){
-      stop("Headers in full Sequence alignment do not correspond to seq.info data")
+  } 
+  else {
+    if(!all(names(full.align) %in% seq.info$Header)){
+      stop("Headers in full sequence alignment do not correspond to seq.info data")
     }
 
     stats.json <- translate.log(log.file)
-    refpkg <- taxit.create(t, full.align, stats.json)
+    refpkg <- taxit.create(phy, full.align, stats.json)
     growth.info.trees  <- run.pplacer_guppy(refpkg)
-    t$growth.info <- annotate.growth(t, growth.info.trees, mc.cores = mc.cores)
+    
+    phy$growth.info <- annotate.growth(phy, growth.info.trees, mc.cores=mc.cores)
   }
 
-  return(t)
+  return(phy)
 }
+
 
 #' Prepare nodes in tree for clustering
 #'
@@ -81,24 +93,39 @@ extend.tree <- function(t, seq.info=data.table(), mc.cores = 1, log.file=NA,
 #' by node labels in the ape object. Unlabeled nodes are defaulted to a bootstrap 
 #' value of 1 (maximum certainty), including the root.
 #'
-#' @param t: An inputted tree passed by extend.tree. Should contain seq.info
-#' @param mc.cores: A parallel option to increas speed
-#' @return A  data table, "node.info" to a annotate the information under a given
+#' @param phy: An inputted tree passed by extend.tree. Should contain seq.info
+#' @param mc.cores: A parallel option to increase speed
+#' @return:  data frame, "node.info" to a annotate the information under a given
 #' node at a tree.
-annotate.nodes <- function(t, mc.cores = 1) {
+annotate.nodes <- function(phy, max.boot=NA, mc.cores=1) {
 
-  # Unlabelled nodes are defaulted to a bootstrap value of 1
-  t$node.label[which(t$node.label %in% "")] <- 1
+  # We assume that internal node labels represent bootstrap support values
+  # Assign maximum bootstrap value to unlabelled internal nodes
+  phy$node.label <- as.numeric(phy$node.label)
+  
+  # are bootstraps scaled to 1 or 100?
+  if (sum(phy$node.label > 1, na.rm=TRUE) / phy$Nnode > 0.5) {
+    # assume bootstrap values are out of 100
+    
+  }
+  
+  phy$node.label[which(phy$node.label=="")] <- 1
 
-  nodes <- 1:(2 * length(t$tip.label) - 1)
+  # number of nodes in a rooted binary tree
+  # note tips are numbered first (1..n), followed by internal nodes
+  nodes <- 1:(2*length(phy$tip.label)-1)
 
   # Store node info in data.table
-  node.info <- data.table::data.table()
-  node.info[, "NodeID" := nodes]
-  node.info[, "Bootstrap" := sapply(c(rep("1", length(t$tip.label)), t$node.label), function(x){
-    ifelse(!grepl("[0-9|/.]", x), as.numeric(x), 1)
-  })] 
-  node.info[,"Bootstrap" := node.info[,"Bootstrap"]/max(node.info[,"Bootstrap"])]
+  node.info <- data.frame(NodeID=nodes)
+  
+  node.info$Bootstrap <- sapply(
+    c(rep(1, length(phy$tip.label)), phy$node.label), 
+    function(x) {
+      ifelse(!grepl("[0-9|/.]", x), as.numeric(x), 1)
+      }) 
+  
+  # FIXME: why are we normalizing bootstrap values?
+  node.info$Bootstrap <- node.info$Bootstrap / max(node.info$Bootstrap)
   
 
   # Get descendant information for each node
