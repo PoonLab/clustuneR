@@ -1,5 +1,6 @@
 require(phytools)
 require(ape)
+require(digest)
 
 #' Prepare a tree for clustering
 #'
@@ -14,12 +15,11 @@ require(ape)
 #' New sequences are assigned as those not in the tree.
 #' @param log.file: A path to the logfile from a tree construction run
 #' @param seqs.full: The full alignment. Including sequences excluded from the tree.
-#' @param mc.cores: Passed to annotate.nodes as a parallel option
 #' @return The tree annotated with node information and seq.info
 #' @export
 #' @example examples/extend.tree_ex.R
 extend.tree <- function(phy, seq.info=data.frame(), full.align=character(0), 
-                        mc.cores=1, log.file=NA, locus = "LOCUS") {
+                        log.file=NA, locus = "LOCUS") {
 
   # Midpoint root for consistency and resolve multichotomies
   phy <- phytools::midpoint.root(phy)
@@ -80,7 +80,7 @@ extend.tree <- function(phy, seq.info=data.frame(), full.align=character(0),
     refpkg <- taxit.create(phy, full.align, stats.json)
     growth.info.trees  <- run.pplacer_guppy(refpkg)
     
-    phy$growth.info <- annotate.growth(phy, growth.info.trees, mc.cores=mc.cores)
+    phy$growth.info <- annotate.growth(phy, growth.info.trees)
   }
 
   return(phy)
@@ -94,10 +94,11 @@ extend.tree <- function(phy, seq.info=data.frame(), full.align=character(0),
 #' value of 1 (maximum certainty), including the root.
 #'
 #' @param phy: An inputted tree passed by extend.tree. Should contain seq.info
-#' @param mc.cores: A parallel option to increase speed
+#' @param max.boot: numeric, user specifies maximum bootstrap value (usually 
+#'                  1 or 100).
 #' @return:  data frame, "node.info" to a annotate the information under a given
 #' node at a tree.
-annotate.nodes <- function(phy, max.boot=NA, mc.cores=1) {
+annotate.nodes <- function(phy, max.boot=NA) {
 
   # We assume that internal node labels represent bootstrap support values
   # Assign maximum bootstrap value to unlabelled internal nodes
@@ -147,7 +148,8 @@ annotate.nodes <- function(phy, max.boot=NA, mc.cores=1) {
 #' Called by extend.tree. Adds path info to the tree, ie. The path of branches from
 #' each node to the root. Required for step.cluster()
 #'
-#' @param t: An inputted tree An inputted tree passed by extend.tree.
+#' @param phy:  ape::phylo object. An inputted tree An inputted tree passed by 
+#'              extend.tree.
 #' @return A matrix labelled "path.info" to attach to a given tree. For each node 
 #' in the path the branch lengths (below node) and bootstraps are given. For terminal 
 #' nodes, no branch length is given below the node and the bootstrap is 1
@@ -208,65 +210,85 @@ annotate.paths <- function(phy) {
 #'
 #' @param t: An inputted tree using ape's tree handling passed by extend.tree
 #' @param t.growth: A set of trees from pplacer. Each with a newly added tip.
-#' @param mc.cores: A parallel option
 #' @return The growth.info for a given tree. This includes the branch length to the 
 #' newly added terminal node, whether or not the neighbour to the newly added terminal
 #' node is also terminal, and the branch length to that neighbour, from the newly 
 #' placed internal node (the "PendantLength")
-annotate.growth <- function(t, t.grown, mc.cores = 1) {
+annotate.growth <- function(phy, phy.grown) {
 
+  growth.info <- lapply(phy.grown, function(x) {
+    # each x is a tree with a new tip grafted
+    
+    # extract set of possible placements of new tip
+    new.ids <- setdiff(x$tip.label, phy$tip.label)
+    new.tips <- which(x$tip.label %in% new.ids)
+    
+    # extract tip label prefix (without M value from pplacer)
+    prefix <- gsub("_#.*", "", new.ids[1])
+    
+    # retrieve indices of in-edges to new tips
+    new.edges <- which(x$edge[, 2] %in% new.tips)
+    term.dists <- x$edge.length[new.edges]
+    
+    new.nodes <- x$edge[new.edges, 1]
+    new.nodes.des <- which(x$edge[, 1] %in% new.nodes)
+    node.boots <- sapply(new.ids, function(x) {
+      l <- strsplit(x, "_M=")[[1]]
+      as.numeric(l[length(l)])
+    })
+    
+    # pendant edges 
+    pen.edges <- setdiff(new.nodes.des, new.edges)
+    pen.dists <- x$edge.length[pen.edges]
+    
+    neighbour.des <- lapply(new.nodes, function(n) {
+      phangorn::Descendants(x, n, "tips")[[1]]
+    })
+    old.tips <- lapply(neighbour.des, function(des) {
+      which(phy$tip.label %in% x$tip.label[des])
+    })
+    terminal <- sapply(old.tips, function(x) {
+      length(x) == 1
+    })
+    
+    list(
+      Header=prefix,
+      NeighborDes=old.tips,
+      Bootstrap=node.boots,
+      TermDistance=term.dists,
+      PendantDistance=pen.dists,
+      Terminal=terminal
+    )
+  })
+  
   # Obtain placement information from trees.
   # New IDs, bootstap + branch lengths of new node
-  growth.info <- dplyr::bind_rows(
-    parallel::mclapply(t.grown, function(x) {
-      new.ids <- setdiff(x$tip.label, t$tip.label)
-      new.tips <- which(x$tip.label %in% new.ids)
-
-      h <- gsub("_#.*", "", new.ids[1])
-
-      new.edges <- which(x$edge[, 2] %in% new.tips)
-      term.dists <- x$edge.length[new.edges]
-
-      new.nodes <- x$edge[new.edges, 1]
-      new.nodes.des <- which(x$edge[, 1] %in% new.nodes)
-      node.boots <- sapply(new.ids, function(x) {
-        l <- strsplit(x, "=")[[1]]
-        as.numeric(l[length(l)])
-      })
-
-      pen.edges <- dplyr::setdiff(new.nodes.des, new.edges)
-      pen.dists <- x$edge.length[pen.edges]
-
-      neighbour.des <- lapply(new.nodes, function(n) {
-        phangorn::Descendants(x, n, "tips")[[1]]
-      })
-      old.tips <- lapply(neighbour.des, function(des) {
-        which(t$tip.label %in% x$tip.label[des])
-      })
-      terminal <- sapply(old.tips, function(x) {
-        length(x) == 1
-      })
-
-      DT <- data.table::data.table(
-        "Header" = h, "NeighbourDes" = old.tips, "Bootstrap" = node.boots,
-        "TermDistance" = term.dists, "PendantDistance" = pen.dists, "Terminal" = terminal
-      )
-
-      return(DT)
-    }, mc.cores = mc.cores)
-  )
 
   # Collapse neighbour node descendant tips to their MRCA
-  collapsed.neighbours <- sapply(growth.info[!(Terminal), NeighbourDes], function(des) {
-    ape::getMRCA(t, des)
-  })
-  temp <- growth.info[, NeighbourDes]
-  temp[which(!growth.info$Terminal)] <- collapsed.neighbours
+  for (i in 1:length(growth.info)) {
+    collapsed.neighbours <- sapply(
+      which(!growth.info[[i]]$Terminal), function(j) {
+        ape::getMRCA(phy, growth.info[[i]]$NeighborDes[[j]])
+        })
+    nd <- growth.info[[i]]$NeighborDes
+    nd[which(!growth.info[[i]]$Terminal)] <- collapsed.neighbours
+    suppressWarnings(growth.info[[i]]$NeighbourNode <- unlist(nd))
+    growth.info[[i]]$NeighborDes <- NULL
+  }
+  
+  # stretch out list to data frame
+  df <- data.frame(
+    Header=unlist(sapply(growth.info, 
+                         function(x) rep(x$Header, length(x$Bootstrap))))
+    )
+  for (field in names(growth.info[[1]])) {
+    if (field == "Header") next;
+    df[[field]] <- unlist(sapply(growth.info, function(x) x[[field]]))
+  }
+  row.names(df) <- NULL
 
-  suppressWarnings(growth.info[, "NeighbourNode" := unlist(temp)])
-  growth.info[, NeighbourDes := NULL]
-
-  if (!all(growth.info$Header %in% t$seq.info[(New), Header])) {
+  if (!all(growth.info$Header %in% phy$seq.info$Header[phy$seq.info$New])) {
+    # FIXME: sometimes tip labels are merged in pplacer output
     warning("Not all newly added sequences are noted in the seq.info of the tree")
   }
 
@@ -423,7 +445,10 @@ taxit.create <- function(t, seqs.full, stats.json, locus = "LOCUS") {
 #' 
 #' @param refpkg: A reference package to use as input for pplacer
 #' @return A set of trees, each containing 1 new sequence as a placement
-run.pplacer_guppy <- function(refpkg) {
+run.pplacer_guppy <- function(refpkg, quiet=FALSE) {
+  if (!quiet) {
+    print("Running pplacer...")
+  }
   pplacer <- system.file("pplacer", package="clustuneR")
   if (pplacer == "") {
     # in case user has not installed package, but running from pkg directory

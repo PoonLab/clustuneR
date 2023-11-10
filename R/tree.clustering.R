@@ -4,7 +4,7 @@
 #' ancestor. Divergence must be done through a series of short branches, which 
 #' the branch.thresh constrains.
 #'
-#' @param t: The input tree file, extended to be annotated with vertex, edge and 
+#' @param phyx: S3 object of class "phylo". The input tree file, extended to be annotated with vertex, edge and 
 #' growth information.
 #' @param branch.thresh: The maximum branch length criterion defining clusters.
 #' A branch exceeding this value separates the tip from it's ancestor's cluster.
@@ -16,32 +16,34 @@
 #' documentation for an example of clustered sequence data + meta data
 #' @export
 #' @example examples/step.cluster_ex.R
-step.cluster <- function(t, branch.thresh = 0.03, boot.thresh = 0, setID = 0) {
+step.cluster <- function(phyx, branch.thresh = 0.03, boot.thresh = 0, setID = 0) {
 
   # Input Checking
   if (!is.numeric(branch.thresh) | !is.numeric(boot.thresh)) {
     stop("Clustering criteria must be numeric values")
   }
-  if (!("path.info" %in% names(t))) {
-    stop("path.info must be defined for tree")
+  if (!("path.info" %in% names(phyx))) {
+    stop("path.info must be defined for input tree `phyx`, did you run ",
+         "extend.tree()?")
   }
-  if (!("growth.info" %in% names(t))) {
-    stop("growth.info must be defined for tree")
+  if (!("growth.info" %in% names(phyx))) {
+    stop("growth.info must be defined for input tree `phyx`, did you run ",
+         "extend.tree()?")
   }
 
   # Obtain the stopping point in the path based on branch.thresh
-  path.stop <- sapply(t$path.info, function(p) {
+  path.stop <- sapply(phyx$path.info, function(p) {
     h <- which(p["BranchLength", ] > branch.thresh)[1]
     c(p[, h], h)
   })
   rownames(path.stop)[4] <- "Height"
-  path.stop["Node", is.na(path.stop["Node", ])] <- length(t$tip.label) + 1
+  path.stop["Node", is.na(path.stop["Node", ])] <- length(phyx$tip.label) + 1
 
   # Check bootstrap requirements, stepping back down clustered paths until they're met.
   i <- which(path.stop["Boot", ] < boot.thresh)
   if (length(i) > 0) {
     path.stop[, i] <- sapply(i, function(j) {
-      p <- t$path.info[[j]]
+      p <- phyx$path.info[[j]]
       p.boots <- p["Boot", 1:path.stop["Height", j]]
       new.h <- which(p.boots >= boot.thresh)[1]
       return(c(p[, new.h], new.h))
@@ -49,15 +51,27 @@ step.cluster <- function(t, branch.thresh = 0.03, boot.thresh = 0, setID = 0) {
   }
 
   # Assign Clusters and update membership info for each
-  seq.cols <- colnames(t$seq.info)
-  t$node.info[, "Cluster"] <- path.stop["Node", ]
-  t$seq.info[, "Cluster" := 0]
-  t$seq.info[!(New), Cluster := t$node.info[1:length(t$tip.label), Cluster]]
+  seq.cols <- colnames(phyx$seq.info)
+  phyx$node.info$Cluster <- path.stop["Node", ]
+  
+  phyx$seq.info$Cluster <- 0
+  phyx$seq.info$Cluster[!phyx$seq.info$New] <- phyx$node.info$Cluster[1:Ntip(phyx)]
+  
+  # build a data frame of known cases (i.e., not new)
+  cluster.set <- subset(phyx$seq.info, subset=!New, select=-New)
+  cluster.set <- cluster.set[order(cluster.set$Cluster), ]
 
+  # collect descendants by cluster
+  temp <- phyx$node.info[phyx$node.info$Cluster %in% cluster.set$Cluster, ]
+  
+  
+### WORK IN PROGRESS - see previous.R to recover original objects
+  
   cluster.set <- t$seq.info[!(New), lapply(seq.cols, function(nm) {
     list(get(nm))
   }), by = Cluster]
   cluster.set <- cluster.set[order(Cluster), ]
+  
   des <- t$node.info[Cluster %in% cluster.set$Cluster, list(.(NodeID)), by = Cluster]
   des <- des[order(Cluster), ]
   cluster.set[, "Descendants" := des$V1]
