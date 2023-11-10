@@ -104,45 +104,40 @@ annotate.nodes <- function(phy, max.boot=NA, mc.cores=1) {
   phy$node.label <- as.numeric(phy$node.label)
   
   # are bootstraps scaled to 1 or 100?
-  if (sum(phy$node.label > 1, na.rm=TRUE) / phy$Nnode > 0.5) {
-    # assume bootstrap values are out of 100
-    
-  }
+  max.boot <- 1
+  if (sum(phy$node.label > 1, na.rm=T) / phy$Nnode > 0.5) max.boot <- 100
   
-  phy$node.label[which(phy$node.label=="")] <- 1
+  # assign max value to nodes without bootstrap support
+  phy$node.label[which(is.na(phy$node.label))] <- max.boot
 
-  # number of nodes in a rooted binary tree
+  # number of nodes in a rooted binary tree is 2n-1
   # note tips are numbered first (1..n), followed by internal nodes
-  nodes <- 1:(2*length(phy$tip.label)-1)
-
-  # Store node info in data.table
-  node.info <- data.frame(NodeID=nodes)
-  
-  node.info$Bootstrap <- sapply(
-    c(rep(1, length(phy$tip.label)), phy$node.label), 
-    function(x) {
-      ifelse(!grepl("[0-9|/.]", x), as.numeric(x), 1)
-      }) 
+  node.info <- data.frame(
+    NodeID = 1:(2*Ntip(phy)-1),
+    Bootstrap = c(rep(max.boot, Ntip(phy)), phy$node.label)
+    )
   
   # FIXME: why are we normalizing bootstrap values?
   node.info$Bootstrap <- node.info$Bootstrap / max(node.info$Bootstrap)
   
-
   # Get descendant information for each node
-  des <- phangorn::Descendants(t, type = "all")
-  node.info[, "Descendants" := des]
+  des <- phangorn::Descendants(phy, type="all")
+  node.info$Descendants <- des
 
   # Get pairwise patristic distance info
-  patristic.dists <- ape::dist.nodes(t)
-  dists.by.des <- lapply(des, function(x) {
-    patristic.dists[x[x <= length(t$tip.label)], x[x <= length(t$tip.label)]]
+  patristic.dists <- ape::dist.nodes(phy)
+  dists.by.des <- lapply(des, function(d) {
+    idx <- d[d<=Ntip(phy)]
+    patristic.dists[idx, idx]
   })
-  node.info$max.patristic.dist <- sapply(dists.by.des, function(x) {
-    max(x)
-  })
-  node.info$mean.patristic.dist <- sapply(dists.by.des, function(x) {
-    mean(x[x > 0])
-  })
+  node.info$max.patristic.dist <- sapply(dists.by.des, max)
+  node.info$mean.patristic.dist <- sapply(
+    dists.by.des, function(x) { 
+      xx <- x[x > 0]
+      if (length(xx) > 0) { return (mean(xx)) }
+      else { return (NA) }
+      }
+    )
 
   return(node.info)
 }
@@ -156,18 +151,18 @@ annotate.nodes <- function(phy, max.boot=NA, mc.cores=1) {
 #' @return A matrix labelled "path.info" to attach to a given tree. For each node 
 #' in the path the branch lengths (below node) and bootstraps are given. For terminal 
 #' nodes, no branch length is given below the node and the bootstrap is 1
-annotate.paths <- function(t) {
+annotate.paths <- function(phy) {
 
   # Get paths and length information from terminal nodes
-  lens <- ape::node.depth.edgelength(t)
-  paths <- ape::nodepath(t)
+  lens <- ape::node.depth.edgelength(phy)
+  paths <- ape::nodepath(phy)
   names(paths) <- sapply(paths, function(p) {
     p[length(p)]
   })
 
   # Extend apes nodepath() function to internal nodes
   i <- 1
-  while (length(paths) < nrow(t$node.info) + 1) {
+  while (length(paths) < nrow(phy$node.info) + 1) {
     new.paths <- sapply(paths[i:length(paths)], function(x) {
       x[-length(x)]
     })
@@ -179,6 +174,7 @@ annotate.paths <- function(t) {
     i <- length(paths) + 1
     paths <- c(paths, new.paths[which(!(names(new.paths) %in% names(paths)))])
   }
+  
   paths <- paths[which(!sapply(paths, function(p) {
     length(p)
   }) == 0)]
@@ -187,11 +183,12 @@ annotate.paths <- function(t) {
     c(NA, (lens[x[-1]] - lens[x[-length(x)]]))
   })
 
-  # Obtain bootstrap branchlength and node number information for all paths
+  # Obtain bootstrap branch length and node number information for all paths
   boots <- lapply(paths, function(x) {
-    t$node.info$Bootstrap[x]
+    phy$node.info$Bootstrap[x]
   })
-  path.info <- lapply(1:nrow(t$node.info), function(i) {
+  
+  path.info <- lapply(1:nrow(phy$node.info), function(i) {
     m <- matrix(ncol = length(paths[[i]]), nrow = 3)
     rownames(m) <- c("Node", "Boot", "BranchLength")
     m[1, ] <- rev(paths[[i]])
