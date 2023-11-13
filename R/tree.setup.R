@@ -150,9 +150,13 @@ annotate.nodes <- function(phy, max.boot=NA) {
 #'
 #' @param phy:  ape::phylo object. An inputted tree An inputted tree passed by 
 #'              extend.tree.
-#' @return A matrix labelled "path.info" to attach to a given tree. For each node 
-#' in the path the branch lengths (below node) and bootstraps are given. For terminal 
-#' nodes, no branch length is given below the node and the bootstrap is 1
+#' @return list of N matrices, where N is the number of nodes in the input tree.
+#'         Each matrix has dimension 3 x P, where P is the path length from 
+#'         the node to the root (inclusive).  The three rows are:
+#'         - Node: integer index of node in path.
+#'         - Boot: bootstrap support associated with the node
+#'         - BranchLength: length of branch associated with the node
+#'         For the root, no branch length is given (NA) and Boot is set to 1.
 annotate.paths <- function(phy) {
 
   # Get paths and length information from terminal nodes

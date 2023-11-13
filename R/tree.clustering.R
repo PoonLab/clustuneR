@@ -31,15 +31,18 @@ step.cluster <- function(phyx, branch.thresh = 0.03, boot.thresh = 0, setID = 0)
          "extend.tree()?")
   }
 
-  # Obtain the stopping point in the path based on branch.thresh
+  # For each node (i) in the tree, find the branch on the path from (i) to 
+  # the root at which the total path length exceeds the threshold.
   path.stop <- sapply(phyx$path.info, function(p) {
     h <- which(p["BranchLength", ] > branch.thresh)[1]
-    c(p[, h], h)
+    c(p[, h], h)  # return column and index (height measured in nodes)
   })
   rownames(path.stop)[4] <- "Height"
   path.stop["Node", is.na(path.stop["Node", ])] <- length(phyx$tip.label) + 1
-
-  # Check bootstrap requirements, stepping back down clustered paths until they're met.
+  # matrix 4 x (2n-1), where n is number of tips in phyx
+  
+  # Check bootstrap requirements, stepping back down clustered paths until 
+  # they're met.
   i <- which(path.stop["Boot", ] < boot.thresh)
   if (length(i) > 0) {
     path.stop[, i] <- sapply(i, function(j) {
