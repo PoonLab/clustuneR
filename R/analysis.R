@@ -31,8 +31,7 @@ multi.cluster <- function(obj, param.list, cluster.method, rangeID=0) {
 #'   Size: The number of sequences in clusters, not including new growth sequences.
 #'   Growth: The number of new sequences added to the cluster.
 #'   SetID: unique identifier for a set of clusters (obtained under given criteria)
-#'   RangeID: 
-#' @param mc.cores: A parallel option to increase run speed
+#'   RangeID:
 #' @param predictor.transformations: A named list of transformation functions for 
 #' each predictor variable, *e.g.*, `list("Data"==sum)`. Because clustered meta data takes 
 #' the form of a list these functions are often necessary to obtain a single, 
@@ -77,7 +76,10 @@ fit.analysis <- function(cluster.data,
     for (i in 1:length(predictors)) {
       pr <- predictors[i]
       ptf <- predictor.transformations[[pr]]  # transformation function
+      
+      # FIXME: this treats all predictors as numeric, but what if they're factors?
       result <- sapply(split(as.numeric(df[[pr]]), df$Cluster), ptf)
+      
       first.rows[[pr]] <- result
     }
     first.rows

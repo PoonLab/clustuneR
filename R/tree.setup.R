@@ -59,7 +59,7 @@ extend.tree <- function(phy, seq.info=data.frame(), full.align=character(0),
 
   phy$seq.info <- seq.info
 
-  phy$node.info <- annotate.nodes(phy, mc.cores)
+  phy$node.info <- annotate.nodes(phy)
   phy$path.info <- annotate.paths(phy)
 
   # Extend with growth_info
@@ -105,8 +105,12 @@ annotate.nodes <- function(phy, max.boot=NA) {
   phy$node.label <- as.numeric(phy$node.label)
   
   # are bootstraps scaled to 1 or 100?
-  max.boot <- 1
-  if (sum(phy$node.label > 1, na.rm=T) / phy$Nnode > 0.5) max.boot <- 100
+  if (is.na(max.boot)) {
+    max.boot <- 1
+    if (sum(phy$node.label > 1, na.rm=T) / phy$Nnode > 0.5) {
+      max.boot <- 100  
+    }
+  }
   
   # assign max value to nodes without bootstrap support
   phy$node.label[which(is.na(phy$node.label))] <- max.boot
@@ -118,8 +122,8 @@ annotate.nodes <- function(phy, max.boot=NA) {
     Bootstrap = c(rep(max.boot, Ntip(phy)), phy$node.label)
     )
   
-  # FIXME: why are we normalizing bootstrap values?
-  node.info$Bootstrap <- node.info$Bootstrap / max(node.info$Bootstrap)
+  # normalize so we are always working on a scale of (0,1)
+  node.info$Bootstrap <- node.info$Bootstrap / max.boot
   
   # Get descendant information for each node
   des <- phangorn::Descendants(phy, type="all")

@@ -34,29 +34,36 @@ step.cluster <- function(phyx, branch.thresh = 0.03, boot.thresh = 0, setID = 0)
   # For each node (i) in the tree, find the branch on the path from (i) to 
   # the root at which the total path length exceeds the threshold.
   path.stop <- sapply(phyx$path.info, function(p) {
-    h <- which(p["BranchLength", ] > branch.thresh)[1]
+    cml.bl <- cumsum(p["BranchLength", ])
+    h <- which(cml.bl > branch.thresh)[1]
     c(p[, h], h)  # return column and index (height measured in nodes)
   })
   rownames(path.stop)[4] <- "Height"
-  path.stop["Node", is.na(path.stop["Node", ])] <- length(phyx$tip.label) + 1
   # matrix 4 x (2n-1), where n is number of tips in phyx
+  
+  # handle any paths that hit root before threshold length
+  path.stop["Node", is.na(path.stop["Node", ])] <- Ntip(phyx) + 1
   
   # Check bootstrap requirements, stepping back down clustered paths until 
   # they're met.
-  i <- which(path.stop["Boot", ] < boot.thresh)
-  if (length(i) > 0) {
-    path.stop[, i] <- sapply(i, function(j) {
-      p <- phyx$path.info[[j]]
-      p.boots <- p["Boot", 1:path.stop["Height", j]]
-      new.h <- which(p.boots >= boot.thresh)[1]
-      return(c(p[, new.h], new.h))
+  low.support <- which(path.stop["Boot", ] < boot.thresh)
+  if (length(low.support) > 0) {
+    path.stop[, low.support] <- sapply(low.support, function(node) {
+      mx <- phyx$path.info[[node]]  # extract matrix
+      boots <- mx["Boot", 1:path.stop["Height", node]]
+      new.node <- which(boots >= boot.thresh)[1]
+      if (is.na(new.node)) {
+        return(c(mx[, 1], 1))
+      }
+      return(c(mx[, new.node], new.node))  # append new height
     })
   }
 
   # Assign Clusters and update membership info for each
   seq.cols <- colnames(phyx$seq.info)
-  phyx$node.info$Cluster <- path.stop["Node", ]
+  phyx$node.info$Cluster <- path.stop["Node", ]  # all nodes in tree
   
+  # cluster assignments for tips only (including "new" sequences)
   phyx$seq.info$Cluster <- 0
   phyx$seq.info$Cluster[!phyx$seq.info$New] <- phyx$node.info$Cluster[1:Ntip(phyx)]
   
@@ -66,6 +73,10 @@ step.cluster <- function(phyx, branch.thresh = 0.03, boot.thresh = 0, setID = 0)
 
   # collect descendants by cluster
   temp <- phyx$node.info[phyx$node.info$Cluster %in% cluster.set$Cluster, ]
+  
+  # every node in the tree (not including new cases) is a descendant
+  # TODO: make a data frame where each row is a descendant
+  # in original, cluster.set is a data.table where each row is a cluster
   
   
 ### WORK IN PROGRESS - see previous.R to recover original objects
@@ -82,7 +93,10 @@ step.cluster <- function(phyx, branch.thresh = 0.03, boot.thresh = 0, setID = 0)
   colnames(cluster.set) <- c("ClusterID", seq.cols, "Descendants", "Size")
   cluster.set$New <- NULL
 
+  
   # Assign growth cases to clusters, summing certainty for each
+  # recall that growth.info can have multiple rows for each new case
+  # because of uncertainty in pplacer location
   t$growth.info[, "Cluster" := t$node.info[t$growth.info$NeighbourNode, Cluster]]
   t$growth.info[(TermDistance) >= branch.thresh, Cluster := NA]
 
