@@ -59,9 +59,9 @@ step.cluster <- function(phyx, branch.thresh = 0.03, boot.thresh = 0, setID = 0)
     })
   }
 
-  # Assign Clusters and update membership info for each
+  # assign cluster memberships for all nodes in tree (not include new tips)
   seq.cols <- colnames(phyx$seq.info)
-  phyx$node.info$Cluster <- path.stop["Node", ]  # all nodes in tree
+  phyx$node.info$Cluster <- path.stop["Node", ]
   
   # cluster assignments for tips only (including "new" sequences)
   phyx$seq.info$Cluster <- 0
@@ -71,12 +71,8 @@ step.cluster <- function(phyx, branch.thresh = 0.03, boot.thresh = 0, setID = 0)
   cluster.set <- subset(phyx$seq.info, subset=!New, select=-New)
   cluster.set <- cluster.set[order(cluster.set$Cluster), ]
 
-  # collect descendants by cluster
-  temp <- phyx$node.info[phyx$node.info$Cluster %in% cluster.set$Cluster, ]
+  # calculate cluster growth
   
-  # every node in the tree (not including new cases) is a descendant
-  # TODO: make a data frame where each row is a descendant
-  # in original, cluster.set is a data.table where each row is a cluster
   
   
 ### WORK IN PROGRESS - see previous.R to recover original objects
@@ -97,9 +93,14 @@ step.cluster <- function(phyx, branch.thresh = 0.03, boot.thresh = 0, setID = 0)
   # Assign growth cases to clusters, summing certainty for each
   # recall that growth.info can have multiple rows for each new case
   # because of uncertainty in pplacer location
+  
+  # transfer cluster assignments of nodes to which each new case was mapped
   t$growth.info[, "Cluster" := t$node.info[t$growth.info$NeighbourNode, Cluster]]
+  
+  # censor out cluster assignments where the branch length exceeds threshold
   t$growth.info[(TermDistance) >= branch.thresh, Cluster := NA]
 
+  # dot alias for list (equivalent to split by - Cluster is outer)
   growth <- t$growth.info[!is.na(Cluster), sum(Bootstrap), by = .(Header, Cluster)]
   if(length(growth)>0){
     growth <- growth[V1 >= boot.thresh, Cluster[which.max(V1)], by = .(Header)]

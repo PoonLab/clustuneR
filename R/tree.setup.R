@@ -1,6 +1,7 @@
 require(phytools)
 require(ape)
 require(digest)
+require(data.table)
 
 #' Prepare a tree for clustering
 #'
@@ -11,14 +12,14 @@ require(digest)
 #' (Matsen, 2010)
 #'
 #' @param phy:  ape::phylo object.  Un-extended.
-#' @param seq.info: A data frame or data.table object containing the sequences.
+#' @param seq.info: A data.frame or data.table object containing the sequences.
 #' New sequences are assigned as those not in the tree.
 #' @param log.file: A path to the logfile from a tree construction run
 #' @param seqs.full: The full alignment. Including sequences excluded from the tree.
 #' @return The tree annotated with node information and seq.info
 #' @export
 #' @example examples/extend.tree_ex.R
-extend.tree <- function(phy, seq.info=data.frame(), full.align=character(0), 
+extend.tree <- function(phy, seq.info=data.table(), full.align=character(0), 
                         log.file=NA, locus = "LOCUS") {
 
   # Midpoint root for consistency and resolve multichotomies
@@ -30,17 +31,17 @@ extend.tree <- function(phy, seq.info=data.frame(), full.align=character(0),
     if(length(full.align) != 0){
       warning("No sequence meta-data included, creating default seq.info input",
               "from headers in alignment")
-      seq.info <- data.frame("Header"=names(full.align)) 
+      seq.info <- data.table("Header"=names(full.align)) 
     } else {
       warning("No sequence meta-data included, creating default seq.info input", 
               "from tree tip.labels")
-      seq.info <- data.frame("Header"=phy$tip.label) 
+      seq.info <- data.table("Header"=phy$tip.label) 
     }
   }
   
   var.names <- colnames(seq.info)
   if (!("Header" %in% var.names)) {
-    stop("Data frame `var.name` must contain Header")
+    stop("`var.name` must contain Header")
   } 
   else {
     if (length(unique(seq.info[, "Header"])) != length(seq.info[, "Header"])) {
@@ -53,9 +54,7 @@ extend.tree <- function(phy, seq.info=data.frame(), full.align=character(0),
   }
   
   # label new sequences
-  seq.info$New <- FALSE
-  which.new <- which(!(seq.info$Header %in% phy$tip.label))
-  seq.info$New[which.new] <- TRUE
+  seq.info$New <- !(seq.info$Header %in% phy$tip.label)
 
   phy$seq.info <- seq.info
 
@@ -63,10 +62,10 @@ extend.tree <- function(phy, seq.info=data.frame(), full.align=character(0),
   phy$path.info <- annotate.paths(phy)
 
   # Extend with growth_info
-  if(is.na(log.file) | (length(full.align)==0)) {
+  if (is.na(log.file) | (length(full.align)==0)) {
     warning("Ignoring growth information, path to logfile and full sequence ", 
             "alignment required.")
-    phy$growth.info <- data.frame(
+    phy$growth.info <- data.table(
       "Header"=character(0), "NeighbourDes"=numeric(0), "Bootstrap"=numeric(0),
       "TermDistance"=numeric(0), "PendantDistance"=numeric(0), "Terminal"=logical(0)
     )
@@ -117,7 +116,7 @@ annotate.nodes <- function(phy, max.boot=NA) {
 
   # number of nodes in a rooted binary tree is 2n-1
   # note tips are numbered first (1..n), followed by internal nodes
-  node.info <- data.frame(
+  node.info <- data.table(
     NodeID = 1:(2*Ntip(phy)-1),
     Bootstrap = c(rep(max.boot, Ntip(phy)), phy$node.label)
     )
@@ -127,7 +126,7 @@ annotate.nodes <- function(phy, max.boot=NA) {
   
   # Get descendant information for each node
   des <- phangorn::Descendants(phy, type="all")
-  node.info$Descendants <- des
+  node.info[, "Descendants" := des]
 
   # Get pairwise patristic distance info
   patristic.dists <- ape::dist.nodes(phy)
@@ -140,12 +139,13 @@ annotate.nodes <- function(phy, max.boot=NA) {
     dists.by.des, function(x) { 
       xx <- x[x > 0]
       if (length(xx) > 0) { return (mean(xx)) }
-      else { return (NA) }
+      else { return (NA) }  # avoid NaN values
       }
     )
 
   return(node.info)
 }
+
 
 #' Get paths relative to starting nodes
 #'
@@ -163,14 +163,13 @@ annotate.nodes <- function(phy, max.boot=NA) {
 #'         For the root, no branch length is given (NA) and Boot is set to 1.
 annotate.paths <- function(phy) {
 
-  # Get paths and length information from terminal nodes
-  lens <- ape::node.depth.edgelength(phy)
+  # Get node indices for all paths from terminal nodes to root
   paths <- ape::nodepath(phy)
   names(paths) <- sapply(paths, function(p) {
     p[length(p)]
   })
 
-  # Extend apes nodepath() function to internal nodes
+  # Append path indices from internal nodes to root (not including root itself)
   i <- 1
   while (length(paths) < nrow(phy$node.info) + 1) {
     new.paths <- sapply(paths[i:length(paths)], function(x) {
@@ -185,18 +184,16 @@ annotate.paths <- function(phy) {
     paths <- c(paths, new.paths[which(!(names(new.paths) %in% names(paths)))])
   }
   
-  paths <- paths[which(!sapply(paths, function(p) {
-    length(p)
-  }) == 0)]
+  # drop paths of no nodes and reorder
+  path.len <- sapply(paths, length) 
+  paths <- paths[which(path.len > 0)]
   paths <- paths[order(as.numeric(names(paths)))]
-  lens <- lapply(paths, function(x) {
-    c(NA, (lens[x[-1]] - lens[x[-length(x)]]))
-  })
+  
+  # retrieve branch lengths for all nodes in paths
+  lens <- lapply(paths, function(p) phy$edge.length[match(p, phy$edge[,2])])
 
-  # Obtain bootstrap branch length and node number information for all paths
-  boots <- lapply(paths, function(x) {
-    phy$node.info$Bootstrap[x]
-  })
+  # Obtain bootstrap supports for all nodes in paths
+  boots <- lapply(paths, function(p) phy$node.info$Bootstrap[p])
   
   path.info <- lapply(1:nrow(phy$node.info), function(i) {
     m <- matrix(ncol = length(paths[[i]]), nrow = 3)
@@ -244,8 +241,7 @@ annotate.growth <- function(phy, phy.grown) {
       l <- strsplit(x, "_M=")[[1]]
       as.numeric(l[length(l)])
     })
-    
-    # pendant edges 
+
     pen.edges <- setdiff(new.nodes.des, new.edges)
     pen.dists <- x$edge.length[pen.edges]
     
@@ -253,47 +249,25 @@ annotate.growth <- function(phy, phy.grown) {
       phangorn::Descendants(x, n, "tips")[[1]]
     })
     old.tips <- lapply(neighbour.des, function(des) {
-      which(phy$tip.label %in% x$tip.label[des])
+      which(t$tip.label %in% x$tip.label[des])
     })
     terminal <- sapply(old.tips, function(x) {
       length(x) == 1
     })
     
-    list(
-      Header=prefix,
-      NeighborDes=old.tips,
-      Bootstrap=node.boots,
-      TermDistance=term.dists,
-      PendantDistance=pen.dists,
-      Terminal=terminal
-    )
+    data.table(Header=prefix, NeighborDes=old.tips, Bootstrap=node.boots,
+               TermDistance=term.dists, PendantDistance=terminal)
   })
-  
-  # Obtain placement information from trees.
-  # New IDs, bootstap + branch lengths of new node
 
   # Collapse neighbour node descendant tips to their MRCA
-  for (i in 1:length(growth.info)) {
-    collapsed.neighbours <- sapply(
-      which(!growth.info[[i]]$Terminal), function(j) {
-        ape::getMRCA(phy, growth.info[[i]]$NeighborDes[[j]])
-        })
-    nd <- growth.info[[i]]$NeighborDes
-    nd[which(!growth.info[[i]]$Terminal)] <- collapsed.neighbours
-    suppressWarnings(growth.info[[i]]$NeighbourNode <- unlist(nd))
-    growth.info[[i]]$NeighborDes <- NULL
-  }
+  collapsed.neighbours <- sapply(growth.info[!(Terminal), NeighbourDes], function(des) {
+    ape::getMRCA(t, des)
+  })
+  temp <- growth.info[, NeighbourDes]
+  temp[which(!growth.info$Terminal)] <- collapsed.neighbours
   
-  # stretch out list to data frame
-  df <- data.frame(
-    Header=unlist(sapply(growth.info, 
-                         function(x) rep(x$Header, length(x$Bootstrap))))
-    )
-  for (field in names(growth.info[[1]])) {
-    if (field == "Header") next;
-    df[[field]] <- unlist(sapply(growth.info, function(x) x[[field]]))
-  }
-  row.names(df) <- NULL
+  suppressWarnings(growth.info[, "NeighbourNode" := unlist(temp)])
+  growth.info[, NeighbourDes := NULL]
 
   if (!all(growth.info$Header %in% phy$seq.info$Header[phy$seq.info$New])) {
     # FIXME: sometimes tip labels are merged in pplacer output
@@ -302,6 +276,7 @@ annotate.growth <- function(phy, phy.grown) {
 
   return(growth.info)
 }
+
 
 #' Build a stats.json
 #'
