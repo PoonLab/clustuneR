@@ -229,7 +229,7 @@ annotate.growth <- function(phy, phy.grown) {
     new.tips <- which(x$tip.label %in% new.ids)
     
     # extract tip label prefix (without M value from pplacer)
-    prefix <- gsub("_#.*", "", new.ids[1])
+    header <- gsub("_#.*", "", new.ids[1])
     
     # retrieve indices of in-edges to new tips
     new.edges <- which(x$edge[, 2] %in% new.tips)
@@ -249,20 +249,26 @@ annotate.growth <- function(phy, phy.grown) {
       phangorn::Descendants(x, n, "tips")[[1]]
     })
     old.tips <- lapply(neighbour.des, function(des) {
-      which(t$tip.label %in% x$tip.label[des])
+      which(phy$tip.label %in% x$tip.label[des])
     })
     terminal <- sapply(old.tips, function(x) {
       length(x) == 1
     })
     
-    data.table(Header=prefix, NeighborDes=old.tips, Bootstrap=node.boots,
-               TermDistance=term.dists, PendantDistance=terminal)
+    data.table::data.table(
+      "Header" = header, "NeighbourDes" = old.tips, 
+      "Bootstrap" = node.boots, "TermDistance" = term.dists, 
+      "PendantDistance" = pen.dists, "Terminal" = terminal
+    )
   })
-
+  growth.info <- do.call(rbind, growth.info)
+  
   # Collapse neighbour node descendant tips to their MRCA
-  collapsed.neighbours <- sapply(growth.info[!(Terminal), NeighbourDes], function(des) {
-    ape::getMRCA(phy, des)
+  collapsed.neighbours <- sapply(
+    growth.info[!(Terminal), NeighbourDes], function(des) {
+    ape::getMRCA(t, des)
   })
+  
   temp <- growth.info[, NeighbourDes]
   temp[which(!growth.info$Terminal)] <- collapsed.neighbours
   
