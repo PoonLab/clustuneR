@@ -95,9 +95,9 @@ minimum.retrospective.edge <- function(obj) {
   
   # extract row index for shortest edge for each new node
   min.retro.edges <- sapply(new.seqs, function(new.seq) {
-    retro.edges <- c(which(obj$edge.info$ID1 == new.seq | obj$edge.info$ID2 == new.seq))
-    my.subset <- obj$edge.info[retro.edges, ]
-    retro.edges[which.min(my.subset$Distance)]
+    my.edges <- c(which(obj$edge.info$ID1 == new.seq | obj$edge.info$ID2 == new.seq))
+    my.subset <- obj$edge.info[my.edges, ]
+    my.edges[which.min(my.subset$Distance)]
   })
   
   return(min.retro.edges)

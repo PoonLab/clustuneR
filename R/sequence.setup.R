@@ -1,3 +1,5 @@
+require(data.table)
+
 #' Convenience function to parse metadata from sequence headers
 #'
 #' Translates a set of sequence headers into a data.frame object for data input.
