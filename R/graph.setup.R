@@ -9,7 +9,7 @@
 #' neighbour (although other options for growth resolutions may exist and be 
 #' implemented).
 #' 
-#' @param seq.info: data.frame, A set of sequence metadata. Must contain a 
+#' @param seq.info: data.table, A set of sequence metadata. Must contain a 
 #' Header column of sequence labels.  If none given, then attempts to 
 #' extract metadata from headers in edge.info.
 #' @param edge.info: data.frame, must contain three columns (ID1, ID2, Distance). 
@@ -35,7 +35,7 @@ create.graph <- function(seq.info, edge.info, which.new=numeric(0),
   }
 
   obj <- list()
-  obj$seq.info <- seq.info
+  obj$seq.info <- as.data.table(seq.info)
   
   # make edge list more compact by replacing names with indices to seq.info
   obj$edge.info <- edge.info

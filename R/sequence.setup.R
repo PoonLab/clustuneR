@@ -48,6 +48,7 @@ parse.headers <- function(headers, var.names=c(), var.transformations = list(), 
   for (i in 1:ncol(raw.mx)) {
     seq.info[var.names[i]] <- var.transformations[[i]](raw.mx[,i])
   }
+  seq.info <- as.data.table(seq.info)
   
   return(seq.info)
 }

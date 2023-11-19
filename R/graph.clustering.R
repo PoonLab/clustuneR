@@ -34,13 +34,22 @@ component.cluster <- function(obj, dist.thresh=0, setID=0) {
   # label sequences with cluster indices
   obj$seq.info$Cluster <- comps$membership
   
-  # generate cluster set
-  growth <- sapply(split(obj$seq.info$New, obj$seq.info$Cluster), sum)
+  # group known cases by cluster membership
+  seq.cols <- colnames(obj$seq.info)
+  cluster.set <- obj$seq.info[!(New), lapply(seq.cols, 
+                                             function(nm) list(get(nm))), by=Cluster]
+  cluster.set[, "Size" := length(V1[[1]]), by = 1:nrow(cluster.set)]
+  colnames(cluster.set) <- c("ClusterID", seq.cols, "Size")
+  cluster.set$New <- NULL  # should be all FALSE
+  cluster.set <- cluster.set[order(ClusterID),]
   
-  cluster.set <- subset(obj$seq.info[!obj$seq.info$New,], select=-New)
-  cluster.set$SetID <- setID
-  cluster.set$DistThresh <- dist.thresh
-  cluster.set$Growth <- growth[cluster.set$Cluster]
+  # Attach growth info and set ID
+  growth <- table(obj$seq.info[(New) & (Cluster %in% cluster.set$ClusterID), Cluster])
+  cluster.set[, "Growth" := 0]
+  cluster.set[ClusterID %in% as.numeric(names(growth)), Growth := as.numeric(growth)]
+  
+  cluster.set[, "DistThresh" := dist.thresh]
+  cluster.set[, "SetID" := setID]
   
   return(cluster.set)
 }

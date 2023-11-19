@@ -266,7 +266,7 @@ annotate.growth <- function(phy, phy.grown) {
   # Collapse neighbour node descendant tips to their MRCA
   collapsed.neighbours <- sapply(
     growth.info[!(Terminal), NeighbourDes], function(des) {
-    ape::getMRCA(t, des)
+    ape::getMRCA(phy, des)
   })
   
   temp <- growth.info[, NeighbourDes]

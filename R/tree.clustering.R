@@ -4,7 +4,7 @@
 #' ancestor. Divergence must be done through a series of short branches, which 
 #' the branch.thresh constrains.
 #'
-#' @param phyx: S3 object of class "phylo". The input tree file, extended to be annotated with vertex, edge and 
+#' @param obj: S3 object of class "phylo". The input tree file, extended to be annotated with vertex, edge and 
 #' growth information.
 #' @param branch.thresh: The maximum branch length criterion defining clusters.
 #' A branch exceeding this value separates the tip from it's ancestor's cluster.
@@ -16,40 +16,40 @@
 #' documentation for an example of clustered sequence data + meta data
 #' @export
 #' @example examples/step.cluster_ex.R
-step.cluster <- function(phyx, branch.thresh = 0.03, boot.thresh = 0, setID = 0) {
+step.cluster <- function(obj, branch.thresh = 0.03, boot.thresh = 0, setID = 0) {
 
   # Input Checking
   if (!is.numeric(branch.thresh) | !is.numeric(boot.thresh)) {
     stop("Clustering criteria must be numeric values")
   }
-  if (!("path.info" %in% names(phyx))) {
-    stop("path.info must be defined for input tree `phyx`, did you run ",
+  if (!("path.info" %in% names(obj))) {
+    stop("path.info must be defined for input tree `obj`, did you run ",
          "extend.tree()?")
   }
-  if (!("growth.info" %in% names(phyx))) {
-    stop("growth.info must be defined for input tree `phyx`, did you run ",
+  if (!("growth.info" %in% names(obj))) {
+    stop("growth.info must be defined for input tree `obj`, did you run ",
          "extend.tree()?")
   }
 
   # For each node (i) in the tree, find the branch on the path from (i) to 
   # the root at which the total path length exceeds the threshold.
-  path.stop <- sapply(phyx$path.info, function(p) {
+  path.stop <- sapply(obj$path.info, function(p) {
     cml.bl <- cumsum(p["BranchLength", ])
     h <- which(cml.bl > branch.thresh)[1]
     c(p[, h], h)  # return column and index (height measured in nodes)
   })
   rownames(path.stop)[4] <- "Height"
-  # matrix 4 x (2n-1), where n is number of tips in phyx
+  # matrix 4 x (2n-1), where n is number of tips in obj
   
   # handle any paths that hit root before threshold length
-  path.stop["Node", is.na(path.stop["Node", ])] <- Ntip(phyx) + 1
+  path.stop["Node", is.na(path.stop["Node", ])] <- Ntip(obj) + 1
   
   # Check bootstrap requirements, stepping back down clustered paths until 
   # they're met.
   low.support <- which(path.stop["Boot", ] < boot.thresh)
   if (length(low.support) > 0) {
     path.stop[, low.support] <- sapply(low.support, function(node) {
-      mx <- phyx$path.info[[node]]  # extract matrix
+      mx <- obj$path.info[[node]]  # extract matrix
       boots <- mx["Boot", 1:path.stop["Height", node]]
       new.node <- which(boots >= boot.thresh)[1]
       if (is.na(new.node)) {
@@ -60,58 +60,46 @@ step.cluster <- function(phyx, branch.thresh = 0.03, boot.thresh = 0, setID = 0)
   }
 
   # assign cluster memberships for all nodes in tree (not include new tips)
-  seq.cols <- colnames(phyx$seq.info)
-  phyx$node.info$Cluster <- path.stop["Node", ]
+  seq.cols <- colnames(obj$seq.info)
+  obj$node.info$Cluster <- path.stop["Node", ]
   
   # cluster assignments for tips only (including "new" sequences)
-  phyx$seq.info$Cluster <- 0
-  phyx$seq.info$Cluster[!phyx$seq.info$New] <- phyx$node.info$Cluster[1:Ntip(phyx)]
+  obj$seq.info$Cluster <- 0
+  obj$seq.info$Cluster[!obj$seq.info$New] <- obj$node.info$Cluster[1:Ntip(obj)]
   
-  # build a data frame of known cases (i.e., not new)
-  cluster.set <- subset(phyx$seq.info, subset=!New, select=-New)
-  cluster.set <- cluster.set[order(cluster.set$Cluster), ]
-
-  # calculate cluster growth
-  
-  
-  
-### WORK IN PROGRESS - see previous.R to recover original objects
-  
-  cluster.set <- t$seq.info[!(New), lapply(seq.cols, function(nm) {
+  # build a data table of known cases (i.e., not new cases)
+  cluster.set <- obj$seq.info[!(New), lapply(seq.cols, function(nm) {
     list(get(nm))
   }), by = Cluster]
   cluster.set <- cluster.set[order(Cluster), ]
   
-  des <- t$node.info[Cluster %in% cluster.set$Cluster, list(.(NodeID)), by = Cluster]
+  # collect descendants for each known case
+  des <- obj$node.info[
+    Cluster %in% cluster.set$Cluster, list(.(NodeID)), by = Cluster
+    ]
   des <- des[order(Cluster), ]
   cluster.set[, "Descendants" := des$V1]
   cluster.set[, "Size" := length(V1[[1]]), by = 1:nrow(cluster.set)]
   colnames(cluster.set) <- c("ClusterID", seq.cols, "Descendants", "Size")
   cluster.set$New <- NULL
-
   
   # Assign growth cases to clusters, summing certainty for each
-  # recall that growth.info can have multiple rows for each new case
-  # because of uncertainty in pplacer location
+  obj$growth.info[, "Cluster" := obj$node.info[
+    obj$growth.info$NeighbourNode, Cluster]
+    ]
+  obj$growth.info[(TermDistance) >= branch.thresh, Cluster := NA]
   
-  # transfer cluster assignments of nodes to which each new case was mapped
-  t$growth.info[, "Cluster" := t$node.info[t$growth.info$NeighbourNode, Cluster]]
-  
-  # censor out cluster assignments where the branch length exceeds threshold
-  t$growth.info[(TermDistance) >= branch.thresh, Cluster := NA]
-
-  # dot alias for list (equivalent to split by - Cluster is outer)
-  growth <- t$growth.info[!is.na(Cluster), sum(Bootstrap), by = .(Header, Cluster)]
-  if(length(growth)>0){
+  growth <- obj$growth.info[!is.na(Cluster), sum(Bootstrap), by = .(Header, Cluster)]
+  if (length(growth)>0){
     growth <- growth[V1 >= boot.thresh, Cluster[which.max(V1)], by = .(Header)]
   }
   growth <- table(growth$V1)
   growth <- growth[which(as.numeric(names(growth)) %in% cluster.set$ClusterID)]
-
+  
   # Attach growth info and a set ID to clusters
   cluster.set[, "Growth" := 0]
   cluster.set[ClusterID %in% as.numeric(names(growth)), "Growth" := as.numeric(growth)]
-
+  
   cluster.set[, "BranchThresh" := branch.thresh]
   cluster.set[, "BootThresh" := boot.thresh]
   cluster.set[, "SetID" := setID]
