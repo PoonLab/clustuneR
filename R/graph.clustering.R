@@ -36,8 +36,9 @@ component.cluster <- function(obj, dist.thresh=0, setID=0) {
   
   # group known cases by cluster membership
   seq.cols <- colnames(obj$seq.info)
-  cluster.set <- obj$seq.info[!(New), lapply(seq.cols, 
-                                             function(nm) list(get(nm))), by=Cluster]
+  cluster.set <- obj$seq.info[
+    !(New), lapply(seq.cols, function(nm) list(get(nm))), by=Cluster
+    ]
   cluster.set[, "Size" := length(V1[[1]]), by = 1:nrow(cluster.set)]
   colnames(cluster.set) <- c("ClusterID", seq.cols, "Size")
   cluster.set$New <- NULL  # should be all FALSE
@@ -51,5 +52,8 @@ component.cluster <- function(obj, dist.thresh=0, setID=0) {
   cluster.set[, "DistThresh" := dist.thresh]
   cluster.set[, "SetID" := setID]
   
+  class(cluster.set) <- c("cluster.set", class(cluster.set))
+  
   return(cluster.set)
 }
+
