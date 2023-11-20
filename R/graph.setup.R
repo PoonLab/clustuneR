@@ -23,8 +23,7 @@
 #' @return S3 object of class clusData
 #' See graph.ex for a more detailed example with annotated data.
 #' @export
-#' @example examples/create.graph_ex.R
-create.graph <- function(seq.info, edge.info, which.new=numeric(0), 
+read.edges <- function(seq.info, edge.info, which.new=numeric(0), 
                          growth.resolution = minimum.retrospective.edge) {
   # Check inputs
   if (!all(c("ID1", "ID2", "Distance") %in% names(edge.info))) {
@@ -69,6 +68,8 @@ create.graph <- function(seq.info, edge.info, which.new=numeric(0),
   new.seqs <- which(obj$seq.info$New)
   obj$edge.info <- obj$edge.info[!(obj$edge.info$ID1 %in% new.seqs | 
                                      obj$edge.info$ID2 %in% new.seqs), ]
+  
+  # append resolved edges
   obj$edge.info <- rbind(obj$edge.info, resolved.edges)
   
   return(obj)
