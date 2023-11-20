@@ -76,7 +76,7 @@ You should see something like this on your console:
     ** testing if installed package keeps a record of temporary installation path
     * DONE (clustuneR)
 
-## Usage example
+## Usage examples
 
 ### Building a tree
 
@@ -185,6 +185,53 @@ random variation in sampling dates. At the threshold that minimizes
 `delta.AIC`, the known infections are partitioned into clusters in such
 a way that minimizes the information loss associated with incorporating
 sample dates into the predictive model.
+
+### Alternative graph based clustering
+
+There are numerous data structures which we can use as a basis for clustering.
+clustuneR also contains functions to support Graph-based clustering. To utilize 
+these, we start by reading in an aligment, extracting metadata and determining 
+the year that would define the partition of new sequences.
+
+``` r
+seqs <- ape::read.FASTA("data/na.fasta", type="DNA")
+
+# parse sequence headers (alternatively import from another file)
+seq.info <- pull.headers(seqs, sep="_", var.names=c('accession', 'coldate', 'subtype'),
+var.transformations=c(as.character, as.Date, as.factor))
+
+# determine newest year for growth
+max.year <- max(year(seq.info$coldate))
+which.new <- which(year(seq.info$coldate) == max.year)
+```
+Once we have a set of sequences read into R and we've determined which of them 
+are "new", we can calculate the pairwise distances between them and use this as 
+the basis for a graph. In this graph, vertices represent sequences and edges are 
+weighted based on genetic distance beetween them. Clusters can be defined as the 
+connected components remaining after edges over a genetic distance threshold are 
+removed. Much like the method described above, we can obtain a range of cluster
+sets based corresponding to a range of genetic distance thresholds, at which point 
+the same poisson regression analysis can be preformed. 
+
+``` r
+# calculate genetic distance using TN93 model
+edge.info <- ape::dist.dna(seqs, pairwise.deletion = T, as.matrix = T, model = "TN93")
+g <- create.graph(seq.info, edge.info, which.new)
+
+# generate cluster sets under varying parameter settings
+param.list <- lapply(seq(0.001, 0.04, 0.001), function(x) {list(g=g, dist.thresh=x)})
+cluster.sets <- multi.cluster(component.cluster, param.list) 
+
+res <- fit.analysis(cluster.sets, predictive.models=p.models, 
+                    predictor.transformations=p.trans)
+AICs <- get.AIC(res)
+delta.AIC <- AICs$TimeModelAIC - AICs$NullModelAIC
+
+cutoffs <- sapply(param.list, function(x) x$dist.thresh)
+par(mar=c(5,5,1,1))
+plot(cutoffs, delta.AIC, type='l', col='cadetblue', lwd=2)
+abline(h=0, lty=2)
+```
 
 ## References
 

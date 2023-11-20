@@ -11,7 +11,7 @@ generate.all <- function() {
 #' Obtain basic sequence information
 generate.seq.info <- function() {
 
-  seq.info.ex <- pull.headers(alignment.ex, var.names = c("ID", "CollectionDate", "Subtype"),
+  seq.info.ex <- parse.headers(names(alignment.ex), var.names = c("ID", "CollectionDate", "Subtype"),
                            var.transformations =list(as.character, as.Date, as.factor))
 
   save(seq.info.ex, file="data/seq.info.ex.RData")
