@@ -90,15 +90,11 @@ minimum.retrospective.edge <- function(obj) {
   new.seqs <- which(obj$seq.info$New)
   old.seqs <- which(!obj$seq.info$New)
   
-  # row indices for edges from an old node to a new node
-  retro.edges <- c(which(obj$edge.info$ID1 %in% new.seqs & obj$edge.info$ID2 %in% old.seqs),
-                   which(obj$edge.info$ID1 %in% old.seqs & obj$edge.info$ID2 %in% new.seqs))
-  
   # extract row index for shortest edge for each new node
   min.retro.edges <- sapply(new.seqs, function(new.seq) {
-    my.edges <- c(which(obj$edge.info$ID1 == new.seq | obj$edge.info$ID2 == new.seq))
-    my.subset <- obj$edge.info[my.edges, ]
-    my.edges[which.min(my.subset$Distance)]
+    idx <- c(which(obj$edge.info$ID1 == new.seq & obj$edge.info$ID2 %in% old.seqs), 
+             which(obj$edge.info$ID2 == new.seq & obj$edge.info$ID1 %in% old.seqs))
+    idx[which.min(obj$edge.info$Distance[idx])]
   })
   
   return(min.retro.edges)
