@@ -33,9 +33,8 @@ parse.headers <- function(headers, var.names=c(), var.transformations = list(), 
     stop("var.names may not contain repeats")
   }
   if (length(var.transformations) == 0) {
-    var.transformations <- sapply(1:length(var.names), function(x) {
-      as.character
-    })
+    warning("Empty var.transformations, defaulting all variables to character.")
+    var.transformations <- sapply(var.names, function(x) as.character)
   } else {
     if (length(var.names) != length(var.transformations)) {
       stop("var.names and var.transformations must be equal lengths")

@@ -6,30 +6,33 @@
 \usage{
 fit.analysis(
   cluster.data,
-  mc.cores = 1,
   predictor.transformations = list(),
-  predictive.models = list(NullModel = function(x) {     glm(Size ~ Growth, data = x,
-    family = "poisson") })
+  predictive.models = list(NullModel = function(x) {
+     glm(Growth ~ Size, data = x,
+    family = "poisson")
+ })
 )
 }
 \arguments{
-\item{cluster.data:}{Inputted set(s) of clusters. Possibly multiple ranges}
-
-\item{mc.cores:}{A parallel option to increase run speed}
+\item{cluster.data:}{data.table, Inputted set(s) of clusters. Possibly multiple ranges
+The following columns are required:
+Size: The number of sequences in clusters, not including new growth sequences.
+Growth: The number of new sequences added to the cluster.
+SetID: unique identifier for a set of clusters (obtained under given criteria)
+RangeID:}
 
 \item{predictor.transformations:}{A named list of transformation functions for
-each predictor variable (ex. list("Data"==sum). Because clustered meta data takes
+each predictor variable, \emph{e.g.}, \code{list("Data"==sum)}. Because clustered meta data takes
 the form of a list these functions are often necessary to obtain a single,
-cluster-level variable}
+cluster-level variable.  Typical functions include \code{mean} and \code{median}.}
 
 \item{predictive.models:}{A named list of functions, each of which applies a
 model to inputted cluster data (x). By default a "NullModel" example. Where
 Growth is predicted only by cluster size}
 }
 \value{
-A data.table of analysis results. Model fits are stored as entries in
-the rows of a data.table. The column specifying setID is retained, as is the
-range ID and the parameters used to create the cluster.
+list, each entry labelled with SetID (to link back to the parameter list)
+Entries contain S3 objects of class "glm" or "lm".
 }
 \description{
 Fits predictive model of some outcome (by default, cluster growth) to some

@@ -86,8 +86,12 @@ component.cluster <- function(obj, dist.thresh=0, setID=0, time.var=NA) {
 }
 
 
+#' Fit binomial regression model to distribution of bipartite edges between
+#' samples at different time points, as a model of decay in edge density with
+#' time.  (internal)
 #' @param nodes:  data.table, excluding new cases
 #' @param edges:  data.frame, edges below a given distance threshold
+#' @return glm object
 fit.decay <- function(nodes, edges) {
   # for every node, find the shortest edge from an older node
   # FIXME: this could be done once only outside this function

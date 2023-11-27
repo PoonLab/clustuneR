@@ -21,7 +21,6 @@ License: `use_gpl3_license()`
 Encoding: UTF-8
 Imports: 
   ape (>= 5.3), 
-  dplyr (>= 0.8.3), 
   digest (>= 0.6.25),
   jsonlite (>= 1.7.2),  
   phangorn (>= 0.7-70),
@@ -31,7 +30,7 @@ Depends:
   R (>= 3.6.3)
 LazyData: true
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.1.1
+RoxygenNote: 7.2.3
 Suggests: 
     testthat (>= 3.0.0)
 Config/testthat/edition: 3

@@ -1,44 +1,31 @@
-require(phytools)
 require(ape)
-require(digest)
+require(digest)  # md5 checksum
 require(data.table)
 
-#' Prepare a tree for clustering
+#' Prepare a tree for clustering analysis
 #'
-#' Extends an ape tree object to include annotated node and path information.
-#' By default this will include some additional info like paths, bootstraps and 
-#' a table of cluster growth. This function makes calls to numerous helpers,
-#' including the binaries of pplacer and guppy software installed with this package
-#' (Matsen, 2010)
-#'
-#' @param phy:  ape::phylo object.  Un-extended.
-#' @param seq.info: A data.frame or data.table object containing the sequences.
-#' New sequences are assigned as those not in the tree.
-#' @param log.file: A path to the logfile from a tree construction run
-#' @param seqs.full: The full alignment. Including sequences excluded from the tree.
+#' @param phy:  ape::phylo object.  The tree should only contain "known" 
+#'              sequences, i.e., none of the "New" sequences we want to predict.
+#' @param seq.info:  data.table object.  Contains metadata for both known and 
+#'                   new sequences, where the latter are identified by not 
+#'                   appearing in the input tree `phy`.  Must contain sequence
+#'                   labels under column label `Header`.
 #' @return The tree annotated with node information and seq.info
 #' @export
-#' @example examples/extend.tree_ex.R
-extend.tree <- function(phy, seq.info=data.table(), full.align=character(0), 
-                        log.file=NA, locus = "LOCUS") {
-
+import.tree <- function(phy, seq.info=data.table()) {
   # Midpoint root for consistency and resolve multichotomies
   phy <- phytools::midpoint.root(phy)
   phy <- ape::multi2di(phy)
+  cat(paste("\nRead in tree with", Ntip(phy), "tips\n"))
 
   # Check Sequence names inputs
-  if (nrow(seq.info) == 0){
-    if(length(full.align) != 0){
-      warning("No sequence meta-data included, creating default seq.info input",
-              "from headers in alignment")
-      seq.info <- data.table("Header"=names(full.align)) 
-    } else {
+  if (nrow(seq.info) == 0) {
       warning("No sequence meta-data included, creating default seq.info input", 
               "from tree tip.labels")
       seq.info <- data.table("Header"=phy$tip.label) 
-    }
   }
   
+  # check sequence metadata (seq.info)
   var.names <- colnames(seq.info)
   if (!("Header" %in% var.names)) {
     stop("`var.name` must contain Header")
@@ -49,39 +36,21 @@ extend.tree <- function(phy, seq.info=data.table(), full.align=character(0),
       warning("Duplicate Headers have been arbitrarily removed")
     }
     if (!all(phy$tip.label %in% seq.info$Header)) {
-      stop("At least 1 tip labels in tree is not represent seq.labels")
+      stop("At least one tip label in tree is not represented seq.info")
     }
   }
   
   # label new sequences
   seq.info$New <- !(seq.info$Header %in% phy$tip.label)
-
+  cat(paste("\nIdentified", sum(seq.info$New), "new sequences\n"))
   phy$seq.info <- seq.info
 
+  # parse bootstrap values, find descendants, calculate patristic distances
   phy$node.info <- annotate.nodes(phy)
+  
+  # get path lengths (from node to root)
   phy$path.info <- annotate.paths(phy)
-
-  # Extend with growth_info
-  if (is.na(log.file) | (length(full.align)==0)) {
-    warning("Ignoring growth information, path to logfile and full sequence ", 
-            "alignment required.")
-    phy$growth.info <- data.table(
-      "Header"=character(0), "NeighbourDes"=numeric(0), "Bootstrap"=numeric(0),
-      "TermDistance"=numeric(0), "PendantDistance"=numeric(0), "Terminal"=logical(0)
-    )
-  } 
-  else {
-    if(!all(names(full.align) %in% seq.info$Header)){
-      stop("Headers in full sequence alignment do not correspond to seq.info data")
-    }
-
-    stats.json <- translate.log(log.file)
-    refpkg <- taxit.create(phy, full.align, stats.json)
-    growth.info.trees  <- run.pplacer_guppy(refpkg)
-    
-    phy$growth.info <- annotate.growth(phy, growth.info.trees)
-  }
-
+  
   return(phy)
 }
 
@@ -208,78 +177,119 @@ annotate.paths <- function(phy) {
 }
 
 
-#' Add the growth information onto the known tree.
-#'
-#' This uses pplacer software to ensure that previously defined clusters remain 
-#' the same. New tips are assigned a set of possible placements in the tree.
-#'
-#' @param t: An inputted tree using ape's tree handling passed by extend.tree
-#' @param t.growth: A set of trees from pplacer. Each with a newly added tip.
-#' @return The growth.info for a given tree. This includes the branch length to the 
-#' newly added terminal node, whether or not the neighbour to the newly added terminal
-#' node is also terminal, and the branch length to that neighbour, from the newly 
-#' placed internal node (the "PendantLength")
-annotate.growth <- function(phy, phy.grown) {
-
-  growth.info <- lapply(phy.grown, function(x) {
-    # each x is a tree with a new tip grafted
-    
-    # extract set of possible placements of new tip
-    new.ids <- setdiff(x$tip.label, phy$tip.label)
-    new.tips <- which(x$tip.label %in% new.ids)
-    
-    # extract tip label prefix (without M value from pplacer)
-    header <- gsub("_#.*", "", new.ids[1])
-    
-    # retrieve indices of in-edges to new tips
-    new.edges <- which(x$edge[, 2] %in% new.tips)
-    term.dists <- x$edge.length[new.edges]
-    
-    new.nodes <- x$edge[new.edges, 1]
-    new.nodes.des <- which(x$edge[, 1] %in% new.nodes)
-    node.boots <- sapply(new.ids, function(x) {
-      l <- strsplit(x, "_M=")[[1]]
-      as.numeric(l[length(l)])
-    })
-
-    pen.edges <- setdiff(new.nodes.des, new.edges)
-    pen.dists <- x$edge.length[pen.edges]
-    
-    neighbour.des <- lapply(new.nodes, function(n) {
-      phangorn::Descendants(x, n, "tips")[[1]]
-    })
-    old.tips <- lapply(neighbour.des, function(des) {
-      which(phy$tip.label %in% x$tip.label[des])
-    })
-    terminal <- sapply(old.tips, function(x) {
-      length(x) == 1
-    })
-    
-    data.table::data.table(
-      "Header" = header, "NeighbourDes" = old.tips, 
-      "Bootstrap" = node.boots, "TermDistance" = term.dists, 
-      "PendantDistance" = pen.dists, "Terminal" = terminal
+#' Place new sequences on the tree.
+#' This function makes calls to pplacer and guppy binaries (Matsen, 2010) 
+#' provided with this package.  pplacer ensures that previously defined clusters 
+#' remain the same. New tips are assigned a set of possible placements in the 
+#' tree.
+#' 
+#' @param phy:  ape::phylo object.  Must be annotated with seq.info, node.info,
+#'              and path.info by calling import.tree().
+#' @param seqs.full:  ape::DNAbin or AAbin object.  This sequence alignment 
+#'                    must contain all known sequences in the tree `phy`, as 
+#'                    well as all new sequences we want to graft to the tree
+#'                    as potential cluster growth.
+#' @param log.file:  character.  A path to the logfile from a tree reconstruction 
+#'                   run.  This file can be produced by IQTREE, FastTree or RAxML.
+#' @return  ape::phylo object with growth.info field
+#' @export
+extend.tree <- function (phy, seqs.full, log.file=NA, locus = "LOCUS") {
+  # Extend with growth_info
+  if (is.na(log.file)) {
+    warning("Ignoring growth information, path to logfile and full sequence ", 
+            "alignment required.")
+    phy$growth.info <- data.table(
+      "Header"=character(0), "NeighbourDes"=numeric(0), "Bootstrap"=numeric(0),
+      "TermDistance"=numeric(0), "PendantDistance"=numeric(0), "Terminal"=logical(0)
     )
-  })
+    return(phy)
+  } 
+  
+  if(!all(names(full.align) %in% seq.info$Header)){
+    stop("Headers in full sequence alignment do not correspond to seq.info data")
+  }
+  
+  # call pplacer to graft new sequences to the tree
+  stats.json <- translate.log(log.file)
+  refpkg <- taxit.create(phy, full.align, stats.json)
+  ptrees  <- run.pplacer_guppy(refpkg)
+  
+  # process trees with new tips
+  growth.info <- lapply(ptrees, function(x) annotate.growth(phy, x))
   growth.info <- do.call(rbind, growth.info)
   
   # Collapse neighbour node descendant tips to their MRCA
   collapsed.neighbours <- sapply(
     growth.info[!(Terminal), NeighbourDes], function(des) {
-    ape::getMRCA(phy, des)
-  })
+      ape::getMRCA(phy, des)
+    })
   
   temp <- growth.info[, NeighbourDes]
   temp[which(!growth.info$Terminal)] <- collapsed.neighbours
   
   suppressWarnings(growth.info[, "NeighbourNode" := unlist(temp)])
   growth.info[, NeighbourDes := NULL]
-
+  
   if (!all(growth.info$Header %in% phy$seq.info$Header[phy$seq.info$New])) {
     # FIXME: sometimes tip labels are merged in pplacer output
     warning("Not all newly added sequences are noted in the seq.info of the tree")
   }
+  phy$growth.info <- growth.info  # attach to tree
+  
+  return(phy)
+}
 
+
+#' Add the growth information onto the known tree.
+#'
+#' @param phy:  ape::phylo object.  Return value of extend.tree().
+#' @param ptree:  ape::phylo object.  A tree generated by pplacer with a 
+#'                newly added tip placed by maximum likelihood.
+#' @return data.table. The growth.info for a given tree. This includes the 
+#'         branch length to the newly added terminal node, whether or not the 
+#'         neighbour to the newly added terminal node is also terminal, and the 
+#'         branch length to that neighbour, from the newly placed internal node 
+#'         (the "PendantLength")
+annotate.growth <- function(phy, ptree) {
+  # extract set of possible placements of new tip
+  new.ids <- setdiff(ptree$tip.label, phy$tip.label)
+  new.tips <- which(ptree$tip.label %in% new.ids)  # node indices
+  
+  # extract tip label prefix (without M value from pplacer)
+  header <- gsub("_#.*", "", new.ids[1])
+  
+  # retrieve indices of in-edges to new tips
+  new.edges <- which(ptree$edge[, 2] %in% new.tips)
+  term.dists <- ptree$edge.length[new.edges]
+  
+  # get index of parent node created by grafting new tip to a branch
+  new.nodes <- ptree$edge[new.edges, 1]
+  new.nodes.des <- which(ptree$edge[, 1] %in% new.nodes)  # all descendants
+  node.boots <- sapply(new.ids, function(x) {
+    l <- strsplit(x, "_M=")[[1]]
+    as.numeric(l[length(l)])
+  })
+
+  # a pendant edge is a branch from the parent node to a descendant 
+  # in the original tree
+  pen.edges <- setdiff(new.nodes.des, new.edges)
+  pen.dists <- ptree$edge.length[pen.edges]
+  
+  neighbour.des <- lapply(new.nodes, function(n) {
+    phangorn::Descendants(ptree, n, "tips")[[1]]
+  })
+  old.tips <- lapply(neighbour.des, function(des) {
+    which(phy$tip.label %in% ptree$tip.label[des])
+  })
+  terminal <- sapply(old.tips, function(x) {
+    length(x) == 1
+  })
+  
+  growth.info <- data.table::data.table(
+    "Header" = header, "NeighbourDes" = old.tips, 
+    "Bootstrap" = node.boots, "TermDistance" = term.dists, 
+    "PendantDistance" = pen.dists, "Terminal" = terminal
+  )
   return(growth.info)
 }
 
