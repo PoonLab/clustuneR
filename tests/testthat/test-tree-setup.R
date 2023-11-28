@@ -20,6 +20,8 @@ test_that("annotate.nodes works", {
   phy <- phangorn::midpoint(phy)
   phy <- ape::multi2di((phy))
   
+  # nodes are numbered 1..n for n tips, and n+1..n+m for m internal nodes
+  # root is n+1, and rest of numbering by preorder traversal
   dt <- annotate.nodes(phy)
   expect_true(is.data.table(dt))
   
@@ -42,23 +44,25 @@ test_that("annotate.nodes works", {
               0.032735809 + 0.023339723))
   expected <- sort(dt$mean.patristic.dist)[1:3]
   expect_equal(result, expected, tolerance=1e-6)
-})
-
-test_that("annotate.paths works", {
-  phy <- ape::read.tree(text=nwk)
-  phy <- phangorn::midpoint(phy)
-  phy <- ape::multi2di((phy))
-  phy$node.info <- annotate.nodes(phy)
   
-  # check composition of return value
-  result <- annotate.paths(phy)
-  expect_type(result, 'list')
-  expect_true(length(result) == Ntip(phy) + Nnode(phy))
-  expect_true(all(sapply(result, nrow) == 3))
+  expect_equal(dt$NodeID, 1:11)
   
-  # nodes are numbered 1..n for n tips, and n+1..n+m for m internal nodes
-  # root is n+1, and rest of numbering by preorder traversal
+  expected <- c(0.020797490, 0.037639528, 0.039226056, 0.074902943,
+                0.032735809, 0.023339723, NA, 0.036096058, 0.004451792,
+                0.025737776, 0.072356702)
+  expect_equal(dt$BranchLength, expected)
+  
+  # check descendants
+  expected <- list(1, 2, 3, 4, 5, 6, c(1:6, 8:11), c(1,2), c(1:4, 8, 10), 
+                   c(3,4), c(5,6))
+  for (i in 1:nrow(dt)) {
+    expect_setequal(dt$Descendants[[i]], expected[[i]])  
+  }
+  
+  # check paths to root
   expected <- list(
-    
-  )
+    c(1, 8, 9, 7), c(2, 8, 9, 7), c(3, 10, 9, 7), c(4, 10, 9, 7), c(5, 11, 7), 
+    c(6, 11, 7), c(7), c(8, 9, 7), c(9, 7), c(10, 9, 7), c(11, 7)
+    )
+  expect_equal(dt$Paths, expected)
 })

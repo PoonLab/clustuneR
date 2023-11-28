@@ -58,9 +58,6 @@ import.tree <- function(phy, seq.info=data.table(), keep_root=FALSE) {
   # parse bootstrap values, find descendants, calculate patristic distances
   phy$node.info <- annotate.nodes(phy)
   
-  # get path lengths (from node to root)
-  phy$path.info <- annotate.paths(phy)
-  
   return(phy)
 }
 
@@ -77,9 +74,13 @@ import.tree <- function(phy, seq.info=data.table(), keep_root=FALSE) {
 #' @return:  data frame, "node.info" to a annotate the information under a given
 #' node at a tree.
 annotate.nodes <- function(phy, max.boot=NA) {
+  if (!is.rooted(phy) | !is.binary(phy)) {
+    stop("annotated.nodes requires a rooted binary tree")
+  }
+  
   # We assume that internal node labels represent bootstrap support values
   # Assign maximum bootstrap value to unlabelled internal nodes
-  phy$node.label <- as.numeric(phy$node.label)
+  suppressWarnings(phy$node.label <- as.numeric(phy$node.label))
   
   # are bootstraps scaled to 1 or 100?
   if (is.na(max.boot)) {
@@ -88,31 +89,39 @@ annotate.nodes <- function(phy, max.boot=NA) {
       max.boot <- 100  
     }
   }
-  
   # assign max value to nodes without bootstrap support
   phy$node.label[which(is.na(phy$node.label))] <- max.boot
 
   # number of nodes in a rooted binary tree is 2n-1
-  # note tips are numbered first (1..n), followed by internal nodes
+  # note tips are numbered first (1..n), followed by internal nodes 
+  # by preorder traversal
+  nnodes <- Nnode(phy)+Ntip(phy)
   node.info <- data.table(
-    NodeID = 1:(2*Ntip(phy)-1),
+    NodeID = 1:nnodes,  # in case table rows get re-ordered
+    BranchLength = phy$edge.length[match(1:nnodes, phy$edge[,2])],
     Bootstrap = c(rep(max.boot, Ntip(phy)), phy$node.label)
     )
   
   # normalize so we are always working on a scale of (0,1)
   node.info$Bootstrap <- node.info$Bootstrap / max.boot
   
-  # Get descendant information for each node
+  # Get descendant information for each node (all nodes above it, not including itself)
   des <- phangorn::Descendants(phy, type="all")
   node.info[, "Descendants" := des]
 
   # Get pairwise patristic distance info
-  patristic.dists <- ape::dist.nodes(phy)
+  patristic.dists <- ape::dist.nodes(phy)  # pairwise matrix
+  
+  # Generates a list of sub-matrices for descendant tips of each node
   dists.by.des <- lapply(des, function(d) {
     idx <- d[d<=Ntip(phy)]
     patristic.dists[idx, idx]
   })
+  
+  # the longest tip-to-tip distance in this subtree
   node.info$max.patristic.dist <- sapply(dists.by.des, max)
+  
+  # the mean tip-to-tip distance in the subtree
   node.info$mean.patristic.dist <- sapply(
     dists.by.des, function(x) { 
       xx <- x[x > 0]
@@ -120,68 +129,14 @@ annotate.nodes <- function(phy, max.boot=NA) {
       else { return (NA) }  # avoid NaN values
       }
     )
+  
+  # Get paths (node indices) from each node to root
+  paths <- sapply(1:nnodes, function(i) {
+    ape::nodepath(phy, from=i, to=Ntip(phy)+1)
+    })
+  node.info[ , Paths:=paths]
 
   return(node.info)
-}
-
-
-#' Get paths relative to starting nodes
-#'
-#' Called by extend.tree. Adds path info to the tree, ie. The path of branches from
-#' each node to the root. Required for step.cluster()
-#'
-#' @param phy:  ape::phylo object. An inputted tree An inputted tree passed by 
-#'              extend.tree.
-#' @return list of N matrices, where N is the number of nodes in the input tree.
-#'         Each matrix has dimension 3 x P, where P is the path length from 
-#'         the node to the root (inclusive).  The three rows are:
-#'         - Node: integer index of node in path.
-#'         - Boot: bootstrap support associated with the node
-#'         - BranchLength: length of branch associated with the node
-#'         For the root, no branch length is given (NA) and Boot is set to 1.
-annotate.paths <- function(phy) {
-  # Get node indices for all paths from terminal nodes to root
-  paths <- ape::nodepath(phy)
-  names(paths) <- sapply(paths, function(p) {
-    p[length(p)]  # retrieve node index of tip
-  })
-
-  # Append path indices from internal nodes to root (not including root itself)
-  i <- 1
-  while (length(paths) < nrow(phy$node.info) + 1) {
-    new.paths <- sapply(paths[i:length(paths)], function(x) {
-      x[-length(x)]
-    })
-    new.paths <- new.paths[!duplicated(new.paths)]
-    names(new.paths) <- sapply(new.paths, function(p) {
-      p[length(p)]  # label with last node index
-    })
-    # FIXME: is this really the most efficient way?
-    i <- length(paths) + 1
-    paths <- c(paths, new.paths[which(!(names(new.paths) %in% names(paths)))])
-  }
-  
-  # drop paths of no nodes and reorder
-  path.len <- sapply(paths, length) 
-  paths <- paths[which(path.len > 0)]
-  paths <- paths[order(as.numeric(names(paths)))]
-  
-  # retrieve branch lengths for all nodes in paths
-  lens <- lapply(paths, function(p) phy$edge.length[match(p, phy$edge[,2])])
-
-  # Obtain bootstrap supports for all nodes in paths
-  boots <- lapply(paths, function(p) phy$node.info$Bootstrap[p])
-  
-  path.info <- lapply(1:nrow(phy$node.info), function(i) {
-    m <- matrix(ncol = length(paths[[i]]), nrow = 3)
-    rownames(m) <- c("Node", "Boot", "BranchLength")
-    m[1, ] <- rev(paths[[i]])
-    m[2, ] <- rev(boots[[i]])
-    m[3, ] <- rev(lens[[i]])
-    return(m)
-  })
-
-  return(path.info)
 }
 
 
