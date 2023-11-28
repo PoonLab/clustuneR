@@ -50,6 +50,15 @@ test_that("annotate.paths works", {
   phy <- ape::multi2di((phy))
   phy$node.info <- annotate.nodes(phy)
   
+  # check composition of return value
   result <- annotate.paths(phy)
   expect_type(result, 'list')
+  expect_true(length(result) == Ntip(phy) + Nnode(phy))
+  expect_true(all(sapply(result, nrow) == 3))
+  
+  # nodes are numbered 1..n for n tips, and n+1..n+m for m internal nodes
+  # root is n+1, and rest of numbering by preorder traversal
+  expected <- list(
+    
+  )
 })

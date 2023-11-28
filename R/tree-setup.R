@@ -140,11 +140,10 @@ annotate.nodes <- function(phy, max.boot=NA) {
 #'         - BranchLength: length of branch associated with the node
 #'         For the root, no branch length is given (NA) and Boot is set to 1.
 annotate.paths <- function(phy) {
-
   # Get node indices for all paths from terminal nodes to root
   paths <- ape::nodepath(phy)
   names(paths) <- sapply(paths, function(p) {
-    p[length(p)]
+    p[length(p)]  # retrieve node index of tip
   })
 
   # Append path indices from internal nodes to root (not including root itself)
@@ -155,9 +154,9 @@ annotate.paths <- function(phy) {
     })
     new.paths <- new.paths[!duplicated(new.paths)]
     names(new.paths) <- sapply(new.paths, function(p) {
-      p[length(p)]
+      p[length(p)]  # label with last node index
     })
-
+    # FIXME: is this really the most efficient way?
     i <- length(paths) + 1
     paths <- c(paths, new.paths[which(!(names(new.paths) %in% names(paths)))])
   }
