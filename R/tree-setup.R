@@ -10,11 +10,21 @@ require(data.table)
 #'                   new sequences, where the latter are identified by not 
 #'                   appearing in the input tree `phy`.  Must contain sequence
 #'                   labels under column label `Header`.
+#' @param keep_root:  logical, override midpoint rooting.  Valid only if input
+#'                    tree is already rooted.
 #' @return The tree annotated with node information and seq.info
 #' @export
-import.tree <- function(phy, seq.info=data.table()) {
+import.tree <- function(phy, seq.info=data.table(), keep_root=FALSE) {
   # Midpoint root for consistency and resolve multichotomies
-  phy <- phytools::midpoint.root(phy)
+  if (is.rooted(phy)) {
+    if (!keep_root) {
+      warning("Re-rooting tree at midpoint. To retain original root, re-run",
+              "with keep_root=TRUE.")
+      phy <- phytools::midpoint.root(phy)  
+    }
+  } else {
+    phy <- phytools::midpoint.root(phy)  
+  }
   phy <- ape::multi2di(phy)
   cat(paste("\nRead in tree with", Ntip(phy), "tips\n"))
 
@@ -67,7 +77,6 @@ import.tree <- function(phy, seq.info=data.table()) {
 #' @return:  data frame, "node.info" to a annotate the information under a given
 #' node at a tree.
 annotate.nodes <- function(phy, max.boot=NA) {
-
   # We assume that internal node labels represent bootstrap support values
   # Assign maximum bootstrap value to unlabelled internal nodes
   phy$node.label <- as.numeric(phy$node.label)

@@ -8,23 +8,48 @@ test_that("import.tree works", {
   
   # call without passing seq.info
   expect_warning(result <- import.tree(phy))
+  
   expect_true(is.rooted(result))
   expect_true(is.binary(result))
   expect_equal(6, Ntip(result))
   expect_equal(5, Nnode(result))
-  
   })
 
 test_that("annotate.nodes works", {
   phy <- ape::read.tree(text=nwk)
+  phy <- phangorn::midpoint(phy)
+  phy <- ape::multi2di((phy))
   
-  result <- annotate.nodes(phy)
-  expect_true(is.data.table(result))
+  dt <- annotate.nodes(phy)
+  expect_true(is.data.table(dt))
   
-  expected <- c(0.9, 0.99, 1.0, 1.0, 1.0)
-  expect_equal(sort(result$Bootstrap), expected)  
+  # check that bootstrap values are rescaled to (0,1)
+  expected <- c(0.9, 0.99, 1.0, 1.0, 1.0, rep(1.0, Ntip(phy)))
+  expect_equal(sort(dt$Bootstrap), expected)
+  
+  # check numbers of descendants per node (does not count self internal)
+  expected <- sort(c(10, 6, 2, 2, 2, rep(1, 6)))
+  result <- sort(sapply(dt$Descendants, length))
+  expect_equal(result, expected)
+  
+  # manually calculated patristic distances
+  expect_equal(max(dt$max.patristic.dist), 0.210185, tolerance=1e-6)
+  expected <- min(dt$max.patristic.dist[dt$max.patristic.dist>0])
+  expect_equal(expected, 0.05607553, tolerance=1e-6)
+  
+  # cherries have only one patristic distance
+  result <- sort(c(0.074902943 + 0.039226056, 0.037639528 + 0.020797490, 
+              0.032735809 + 0.023339723))
+  expected <- sort(dt$mean.patristic.dist)[1:3]
+  expect_equal(result, expected, tolerance=1e-6)
 })
 
 test_that("annotate.paths works", {
-
+  phy <- ape::read.tree(text=nwk)
+  phy <- phangorn::midpoint(phy)
+  phy <- ape::multi2di((phy))
+  phy$node.info <- annotate.nodes(phy)
+  
+  result <- annotate.paths(phy)
+  expect_type(result, 'list')
 })
