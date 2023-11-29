@@ -212,7 +212,7 @@ annotate.growth <- function(phy, ptree) {
   new.ids <- setdiff(ptree$tip.label, phy$tip.label)
   new.tips <- which(ptree$tip.label %in% new.ids)  # node indices
   
-  # extract tip label prefix (without M value from pplacer)
+  # extract tip label prefix (remove "_#" and anything that follows)
   header <- gsub("_#.*", "", new.ids[1])
   
   # retrieve indices of in-edges to new tips
@@ -332,7 +332,8 @@ translate.log <- function(log.file) {
 #' 
 #' @param t: The tree (made on a subset of the full alignment)
 #' @param seqs.full: The full alignment. Including sequences excluded from the tree.
-#' @param stats.json: Path to the full alignment file (new + old seqs)
+#' @param stats.json: JSON object, parameters extracted from logfile using
+#'                    translate.log().
 #' @param locus: Extra information required for the summary json
 #' @return Path to a temporary refpkg directory
 taxit.create <- function(t, seqs.full, stats.json, locus = "LOCUS") {

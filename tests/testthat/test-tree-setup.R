@@ -101,3 +101,16 @@ test_that("extend.tree works", {
   expect_true("growth.info" %in% names(result))
   expect_true(is.data.table(result$growth.info))
 })
+
+test_that("annotate.growth works", {
+  seqs <- ape::read.FASTA(test_path("test.fasta"))
+  seq.info <- parse.headers(
+    names(seqs), var.names=c("accn", "coldate", "subtype"),
+    var.transformations = c(as.character, as.Date, as.factor))
+  phy <- import.tree(phy, seq.info = seq.info)
+  
+  ptrees <- ape::read.tree(test_path("growth.tre"))
+  pt1 <- ptrees[[1]]
+  result <- annotate.growth(phy, pt1)
+  
+})
