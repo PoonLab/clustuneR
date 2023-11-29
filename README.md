@@ -2,6 +2,12 @@
 
 ### Implementing clustering algorithms on genetic data and finding optimal parameters through the performance of predictive growth models.
 
+> :warning: **The main branch of this repository is currently undergoing substantial repair.**
+> If you are trying to reproduce results from our tree clustering paper, please use the old
+> code repository at https://github.com/PoonLab/tn.
+> If you are trying to reproduce results from our graph (component) clustering paper, please
+> use the v1.0 release of this repository.
+
 clustuneR builds clusters from inputted sequence alignments and/or
 phylogenetic trees, allowing users to choose between multiple
 cluster-building algorithms implemented in the package. These algorithms
