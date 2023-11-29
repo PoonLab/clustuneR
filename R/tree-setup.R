@@ -9,7 +9,7 @@ require(data.table)
 #' @param seq.info:  data.table object.  Contains metadata for both known and 
 #'                   new sequences, where the latter are identified by not 
 #'                   appearing in the input tree `phy`.  Must contain sequence
-#'                   labels under column label `Header`.
+#'                   labels under column label `Header`.  See parse.headers()
 #' @param keep_root:  logical, override midpoint rooting.  Valid only if input
 #'                    tree is already rooted.
 #' @return The tree annotated with node information and seq.info
@@ -18,15 +18,15 @@ import.tree <- function(phy, seq.info=data.table(), keep_root=FALSE) {
   # Midpoint root for consistency and resolve multichotomies
   if (is.rooted(phy)) {
     if (!keep_root) {
-      warning("Re-rooting tree at midpoint. To retain original root, re-run",
-              "with keep_root=TRUE.")
+      cat(paste("Re-rooting tree at midpoint. To retain original root, re-run",
+                "with keep_root=TRUE."))
       phy <- phytools::midpoint.root(phy)  
     }
   } else {
     phy <- phytools::midpoint.root(phy)  
   }
   phy <- ape::multi2di(phy)
-  cat(paste("\nRead in tree with", Ntip(phy), "tips\n"))
+  cat(paste("Read in tree with", Ntip(phy), "tips\n"))
 
   # Check Sequence names inputs
   if (nrow(seq.info) == 0) {
@@ -52,7 +52,7 @@ import.tree <- function(phy, seq.info=data.table(), keep_root=FALSE) {
   
   # label new sequences
   seq.info$New <- !(seq.info$Header %in% phy$tip.label)
-  cat(paste("\nIdentified", sum(seq.info$New), "new sequences\n"))
+  cat(paste("Identified", sum(seq.info$New), "new sequences\n"))
   phy$seq.info <- seq.info
 
   # parse bootstrap values, find descendants, calculate patristic distances
@@ -148,28 +148,22 @@ annotate.nodes <- function(phy, max.boot=NA) {
 #' 
 #' @param phy:  ape::phylo object.  Must be annotated with seq.info, node.info,
 #'              and path.info by calling import.tree().
-#' @param seqs.full:  ape::DNAbin or AAbin object.  This sequence alignment 
-#'                    must contain all known sequences in the tree `phy`, as 
-#'                    well as all new sequences we want to graft to the tree
-#'                    as potential cluster growth.
+#' @param full.align:  ape::DNAbin or AAbin object.  This sequence alignment 
+#'                     must contain all known sequences in the tree `phy`, as 
+#'                     well as all new sequences we want to graft to the tree
+#'                     as potential cluster growth.
 #' @param log.file:  character.  A path to the logfile from a tree reconstruction 
 #'                   run.  This file can be produced by IQTREE, FastTree or RAxML.
 #' @return  ape::phylo object with growth.info field
 #' @export
-extend.tree <- function (phy, seqs.full, log.file=NA, locus = "LOCUS") {
+extend.tree <- function (phy, full.align, log.file=NA, locus = "LOCUS") {
   # Extend with growth_info
   if (is.na(log.file)) {
-    warning("Ignoring growth information, path to logfile and full sequence ", 
-            "alignment required.")
-    phy$growth.info <- data.table(
-      "Header"=character(0), "NeighbourDes"=numeric(0), "Bootstrap"=numeric(0),
-      "TermDistance"=numeric(0), "PendantDistance"=numeric(0), "Terminal"=logical(0)
-    )
-    return(phy)
-  } 
-  
-  if(!all(names(full.align) %in% seq.info$Header)){
-    stop("Headers in full sequence alignment do not correspond to seq.info data")
+    stop("Ignoring growth information, path to logfile and full sequence ", 
+         "alignment required.")
+  }
+  if(!all(names(full.align) %in% phy$seq.info$Header)){
+    stop("Headers in full.align do not match phy$seq.info")
   }
   
   # call pplacer to graft new sequences to the tree

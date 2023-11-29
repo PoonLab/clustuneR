@@ -66,3 +66,38 @@ test_that("annotate.nodes works", {
     )
   expect_equal(dt$Paths, expected)
 })
+
+
+test_that("translate.log works", {
+  json <- translate.log(test_path("test-oldseq.fasta.log"))
+  expect_true(class(json) == 'json')
+  result <- jsonlite::fromJSON(json)
+  expect_true(class(result) == 'list')
+  
+  # TODO: some of these values are constant, not worth checking
+  expect_true(result$empirical_frequencies)
+  expect_equal(result$datatype, "DNA")
+  expect_equal(result$subs_model, "GTR")
+  expect_equal(result$program, "IQ-TREE")
+  
+  expected <- list("ac"=2.43167, "gt"=1.00000, "at"=1.00000, 
+                   "ag"=12.56081, "cg"=2.43167, "ct"=12.56081)
+  expect_equal(result$subs_rates, expected, tolerance=0.0001)
+})
+
+test_that("extend.tree works", {
+  #seqs <- ape::read.FASTA(system.file("exdata/test.fasta", package="clustuneR"))
+  seqs <- ape::read.FASTA(test_path("test.fasta"))
+  expect_equal(length(seqs), 9)
+  
+  seq.info <- parse.headers(
+    names(seqs), var.names=c("accn", "coldate", "subtype"),
+    var.transformations = c(as.character, as.Date, as.factor))
+  phy <- import.tree(phy, seq.info = seq.info)
+  expect_true("node.info" %in% names(phy))
+  
+  log.file <- test_path("test-oldseq.fasta.log")
+  result <- extend.tree(phy, seqs, log.file)
+  expect_true("growth.info" %in% names(result))
+  expect_true(is.data.table(result$growth.info))
+})
