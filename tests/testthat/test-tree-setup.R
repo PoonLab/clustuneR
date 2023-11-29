@@ -85,6 +85,51 @@ test_that("translate.log works", {
   expect_equal(result$subs_rates, expected, tolerance=0.0001)
 })
 
+test_that("annotate.growth works", {
+  seqs <- ape::read.FASTA(test_path("test.fasta"))
+  seq.info <- parse.headers(
+    names(seqs), var.names=c("accn", "coldate", "subtype"),
+    var.transformations = c(as.character, as.Date, as.factor))
+  phy <- import.tree(phy, seq.info = seq.info)
+  
+  # bypasses first part of extend.tree()
+  ptrees <- ape::read.tree(test_path("growth.tre"))
+  ptree <- ptrees[[1]]
+  
+  result <- annotate.growth(phy, ptree)
+  expect_true(is.data.table(result))
+  expect_equal(ncol(result), 6)
+  
+  # check contents of result against manually curated values
+  expected <- rep("KU191003.1_2012-11-19_subC", 2)
+  expect_equal(result$Header, expected)
+  
+  # KU190950.1_2011-02-01_subC, KU190868.1_2008-09-30_subC
+  expected <- c(3, 4)
+  expect_setequal(result$NeighbourDes, expected)
+  
+  expected <- c(0.0206413, 0.979359)
+  expect_equal(sort(result$Bootstrap), expected, tolerance=1e-6)
+  
+  expected <- c(0.027342, 0.031319)
+  expect_equal(sort(result$TermDistance), expected, tolerance=1e-5)
+  
+  expected <- c(0.031486, 0.0652853)
+  expect_equal(sort(result$PendantDistance), expected, tolerance=1e-5)
+  
+  expected <- c(TRUE, TRUE)
+  expect_equal(result$Terminal, expected)
+  
+  # check another placement tree
+  ptree <- ptrees[[2]]
+  result <- annotate.growth(phy, ptree)
+  expect_equal(result$Header, "KU190027.1_2012-11-22_subA")
+  expect_equal(result$NeighbourDes, list(2))
+  expect_equal(result$Bootstrap, 1)
+  expect_equal(result$PendantDistance, 0.0237015, tolerance=1e-6)
+  expect_equal(result$Terminal, TRUE)
+})
+
 test_that("extend.tree works", {
   #seqs <- ape::read.FASTA(system.file("exdata/test.fasta", package="clustuneR"))
   seqs <- ape::read.FASTA(test_path("test.fasta"))
@@ -100,17 +145,10 @@ test_that("extend.tree works", {
   result <- extend.tree(phy, seqs, log.file)
   expect_true("growth.info" %in% names(result))
   expect_true(is.data.table(result$growth.info))
-})
-
-test_that("annotate.growth works", {
-  seqs <- ape::read.FASTA(test_path("test.fasta"))
-  seq.info <- parse.headers(
-    names(seqs), var.names=c("accn", "coldate", "subtype"),
-    var.transformations = c(as.character, as.Date, as.factor))
-  phy <- import.tree(phy, seq.info = seq.info)
+  expect_equal(nrow(result$growth.info), 4)
   
-  ptrees <- ape::read.tree(test_path("growth.tre"))
-  pt1 <- ptrees[[1]]
-  result <- annotate.growth(phy, pt1)
+  # test if tips below induced nodes (NeighbourDes) are collapsed to their MRCA
+  expect_true(!is.element("NeighbourDes", names(result$growth.info)))
+  
   
 })
