@@ -1,80 +1,40 @@
 #' Obtain paraphyletic clusters
 #'
-#' Clusters are defined as a group of tips diverging from a high confidence common 
-#' ancestor. Divergence must be done through a series of short branches, which 
-#' the branch.thresh constrains.
+#' Clusters are defined as a group of tips diverging from a high confidence 
+#' common ancestor. Divergence must be done through a series of short branches, 
+#' which the branch.thresh constrains.
 #'
-#' @param obj: S3 object of class "phylo". The input tree file, extended to be annotated with vertex, edge and 
-#' growth information.
-#' @param branch.thresh: The maximum branch length criterion defining clusters.
-#' A branch exceeding this value separates the tip from it's ancestor's cluster.
-#' Higher values imply larger average cluster sizes.
-#' @param boot.thresh: The minimum bootstrap criterion defining clusters.
-#' Lower values imply larger average cluster size
-#' @param setID: A numeric identifier for this cluster set.
-#' @return: A set of clusters as a data.table. See example cluster.ex object 
-#' documentation for an example of clustered sequence data + meta data
+#' @param phy: S3 object of class "phylo". The input tree file, extended to be 
+#'             annotated with vertex, edge and growth information.
+#' @param branch.thresh: numeric, the maximum branch length criterion defining 
+#'                       clusters.  A branch exceeding this value separates the 
+#'                       tip from its ancestor's cluster.  Higher values imply 
+#'                       larger average cluster sizes.
+#' @param boot.thresh: numeric, the minimum bootstrap criterion defining 
+#'                     clusters.  Lower values imply larger average cluster 
+#'                     size.
+#' @param setID:  integer, a numeric identifier for this cluster set.
+#' @return:  A set of clusters as a data.table.
 #' @export
-#' @example examples/step.cluster_ex.R
-step.cluster <- function(obj, branch.thresh = 0.03, boot.thresh = 0, setID = 0) {
-
-  # Input Checking
+step.cluster <- function(phy, branch.thresh=0.03, boot.thresh=0, setID=0) {
   if (!is.numeric(branch.thresh) | !is.numeric(boot.thresh)) {
     stop("Clustering criteria must be numeric values")
   }
-  if (!("path.info" %in% names(obj))) {
-    stop("path.info must be defined for input tree `obj`, did you run ",
+  if (!("growth.info" %in% names(phy))) {
+    stop("growth.info must be defined for input tree `phy`, did you run ",
          "extend.tree()?")
   }
-  if (!("growth.info" %in% names(obj))) {
-    stop("growth.info must be defined for input tree `obj`, did you run ",
-         "extend.tree()?")
-  }
-
-  # For each node (i) in the tree, find the branch on the path from (i) to 
-  # the root at which the total path length exceeds the threshold.
-  path.stop <- lapply(obj$node.info$Paths, function(p) {
-    bl <- obj$node.info$BranchLength[p]
-    cml.bl <- cumsum(bl)
-    ht <- which(cml.bl > branch.thresh)[1]  # height, index into other vectors
-    boots <- obj$node.info$Bootstrap[p]
-    return(c(Node=p[ht], Boot=boots[ht], BranchLength=bl[ht], Height=ht))
-  })
-  path.stop <- as.data.frame(do.call(rbind, path.stop))
-  # handle any paths that hit root before threshold length
-  path.stop$Node[is.na(path.stop$Node)] <- Ntip(obj) + 1  # root index
-  
-  # Check bootstrap requirements, stepping back down clustered paths until 
-  # they're met.
-  low.support <- which(path.stop$Boot < boot.thresh)
-  for (i in low.support) {
-    ht <- path.stop$Height[i]
-    this.path <- obj$node.info$Paths[[i]]
-    boots <- obj$node.info$Bootstrap[this.path]
-    blens <- obj$node.info$BranchLength[this.path]
-    new.idx <- which(boots[ht:length(boots)] >= boot.thresh)[1]
-    new.ht <- ht+new.idx-1
-    if (is.na(new.idx)) {
-      # FIXME: this should never happen because root bootstrap is set to max
-      stop("step.clustering: no ancestral nodes met bootstrap threshold.")
-    }
-    path.stop$Node[i] <- this.path[new.ht]
-    path.stop$Boot[i] <- boots[new.ht]
-    path.stop$BranchLength[i] <- blens[new.ht]
-    path.stop$Height[i] <- new.ht
-  }
-  
 
   # assign cluster memberships for all nodes in tree (not include new tips)
-  seq.cols <- colnames(obj$seq.info)
-  obj$node.info$Cluster <- path.stop["Node", ]
+  seq.cols <- colnames(phy$seq.info)
+  phy$node.info$Cluster <- path.stop["Node", ]
   
   # cluster assignments for tips only (including "new" sequences)
-  obj$seq.info$Cluster <- 0
-  obj$seq.info$Cluster[!obj$seq.info$New] <- obj$node.info$Cluster[1:Ntip(obj)]
+  phy$seq.info$Cluster <- 0
+  phy$seq.info$Cluster[!phy$seq.info$New] <- phy$node.info$Cluster[1:Ntip(phy)]
   
   # build a data table of known cases (i.e., not new cases)
-  cluster.set <- obj$seq.info[!(New), lapply(seq.cols, function(nm) {
+  cluster.set <- phy$seq.info[!(New), lapply(seq.cols, function(nm) {
     list(get(nm))
   }), by = Cluster]
   cluster.set <- cluster.set[order(Cluster), ]
@@ -90,27 +50,83 @@ step.cluster <- function(obj, branch.thresh = 0.03, boot.thresh = 0, setID = 0) 
   cluster.set$New <- NULL
   
   # Assign growth cases to clusters, summing certainty for each
-  obj$growth.info[, "Cluster" := obj$node.info[
-    obj$growth.info$NeighbourNode, Cluster]
+  phy$growth.info[, "Cluster" := phy$node.info[
+    phy$growth.info$NeighbourNode, Cluster]
     ]
-  obj$growth.info[(TermDistance) >= branch.thresh, Cluster := NA]
+  phy$growth.info[(TermDistance) >= branch.thresh, Cluster := NA]
   
-  growth <- obj$growth.info[!is.na(Cluster), sum(Bootstrap), by = .(Header, Cluster)]
+  growth <- phy$growth.info[!is.na(Cluster), sum(Bootstrap), 
+                            by=.(Header, Cluster)]
   if (length(growth)>0){
-    growth <- growth[V1 >= boot.thresh, Cluster[which.max(V1)], by = .(Header)]
+    growth <- growth[V1 >= boot.thresh, Cluster[which.max(V1)], by=.(Header)]
   }
   growth <- table(growth$V1)
   growth <- growth[which(as.numeric(names(growth)) %in% cluster.set$ClusterID)]
   
   # Attach growth info and a set ID to clusters
   cluster.set[, "Growth" := 0]
-  cluster.set[ClusterID %in% as.numeric(names(growth)), "Growth" := as.numeric(growth)]
+  cluster.set[ClusterID %in% as.numeric(names(growth)), 
+              "Growth":=as.numeric(growth)]
   
   cluster.set[, "BranchThresh" := branch.thresh]
   cluster.set[, "BootThresh" := boot.thresh]
   cluster.set[, "SetID" := setID]
 
   return(cluster.set)
+}
+
+
+#' Assign subset trees
+#' 
+#' For each node (i) in the tree, find the branch on the path from (i) to 
+#' the ancestral node at which the total path length exceeds the threshold.
+#' If bootstrap support at that node is below the threshold, step further
+#' down the tree (toward global root) until  it is met.
+#' @param phy: an object of class ape::phylo.
+#' @param branch.thresh:  numeric, branch length threshold (distance from
+#'                        node to root of subset tree).
+#' @param boot.thresh:  numeric, bootstrap support threshold.
+#' @return data frame with a row for each node in the tree, identifying 
+#'         the subset tree-defining root node
+assign.sstrees <- function(phy, branch.thresh, boot.thresh) {
+  res <- lapply(phy$node.info$Paths, function(p) {
+    bl <- phy$node.info$BranchLength[p]
+    cml.bl <- cumsum(bl)
+    ht <- which(cml.bl > branch.thresh)[1]  # height, index into other vectors
+    boots <- phy$node.info$Bootstrap[p]
+    return(c(Node=p[ht], Boot=boots[ht], BranchLength=bl[ht], Height=ht))
+  })
+  res <- as.data.frame(do.call(rbind, path.stop))
+  
+  # handle any paths that hit root before threshold length
+  res$Node[is.na(path.stop$Node)] <- Ntip(phy)+1  # root index
+  
+  # Check bootstrap requirements, stepping back down clustered paths until 
+  # they're met.
+  low.support <- which(res$Boot < boot.thresh)
+  for (i in low.support) {
+    ht <- res$Height[i]  # current position in path for this node
+    
+    # extract attributes for all nodes on this path
+    this.path <- phy$node.info$Paths[[i]]
+    boots <- phy$node.info$Bootstrap[this.path]
+    blens <- phy$node.info$BranchLength[this.path]
+
+    # determine new stopping point, bypassing path length threshold
+    new.idx <- which(boots[ht:length(boots)] >= boot.thresh)[1]
+    new.ht <- ht+new.idx-1
+    if (is.na(new.idx)) {
+      # this should never happen because root bootstrap is set to max
+      stop("assign.sstrees: no ancestral nodes met bootstrap threshold.")
+    }
+    
+    # update data frame with new entry
+    res$Node[i] <- this.path[new.ht]
+    res$Boot[i] <- boots[new.ht]
+    res$BranchLength[i] <- blens[new.ht]
+    res$Height[i] <- new.ht
+  }
+  return(res)
 }
 
 
