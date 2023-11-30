@@ -33,31 +33,37 @@ step.cluster <- function(obj, branch.thresh = 0.03, boot.thresh = 0, setID = 0) 
 
   # For each node (i) in the tree, find the branch on the path from (i) to 
   # the root at which the total path length exceeds the threshold.
-  path.stop <- sapply(obj$path.info, function(p) {
-    cml.bl <- cumsum(p["BranchLength", ])
-    h <- which(cml.bl > branch.thresh)[1]
-    c(p[, h], h)  # return column and index (height measured in nodes)
+  path.stop <- lapply(obj$node.info$Paths, function(p) {
+    bl <- obj$node.info$BranchLength[p]
+    cml.bl <- cumsum(bl)
+    ht <- which(cml.bl > branch.thresh)[1]  # height, index into other vectors
+    boots <- obj$node.info$Bootstrap[p]
+    return(c(Node=p[ht], Boot=boots[ht], BranchLength=bl[ht], Height=ht))
   })
-  rownames(path.stop)[4] <- "Height"
-  # matrix 4 x (2n-1), where n is number of tips in obj
-  
+  path.stop <- as.data.frame(do.call(rbind, path.stop))
   # handle any paths that hit root before threshold length
-  path.stop["Node", is.na(path.stop["Node", ])] <- Ntip(obj) + 1
+  path.stop$Node[is.na(path.stop$Node)] <- Ntip(obj) + 1  # root index
   
   # Check bootstrap requirements, stepping back down clustered paths until 
   # they're met.
-  low.support <- which(path.stop["Boot", ] < boot.thresh)
-  if (length(low.support) > 0) {
-    path.stop[, low.support] <- sapply(low.support, function(node) {
-      mx <- obj$path.info[[node]]  # extract matrix
-      boots <- mx["Boot", 1:path.stop["Height", node]]
-      new.node <- which(boots >= boot.thresh)[1]
-      if (is.na(new.node)) {
-        return(c(mx[, 1], 1))
-      }
-      return(c(mx[, new.node], new.node))  # append new height
-    })
+  low.support <- which(path.stop$Boot < boot.thresh)
+  for (i in low.support) {
+    ht <- path.stop$Height[i]
+    this.path <- obj$node.info$Paths[[i]]
+    boots <- obj$node.info$Bootstrap[this.path]
+    blens <- obj$node.info$BranchLength[this.path]
+    new.idx <- which(boots[ht:length(boots)] >= boot.thresh)[1]
+    new.ht <- ht+new.idx-1
+    if (is.na(new.idx)) {
+      # FIXME: this should never happen because root bootstrap is set to max
+      stop("step.clustering: no ancestral nodes met bootstrap threshold.")
+    }
+    path.stop$Node[i] <- this.path[new.ht]
+    path.stop$Boot[i] <- boots[new.ht]
+    path.stop$BranchLength[i] <- blens[new.ht]
+    path.stop$Height[i] <- new.ht
   }
+  
 
   # assign cluster memberships for all nodes in tree (not include new tips)
   seq.cols <- colnames(obj$seq.info)
