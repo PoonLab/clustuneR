@@ -1,7 +1,7 @@
 # prepare test fixture
 seqs <- ape::read.FASTA(test_path("test.fasta"))
-seq.info <- parse.headers(
-  names(seqs), var.names=c("accn", "coldate", "subtype"),
+seq.info <- parse.headers(names(seqs), 
+  var.names=c("accn", "coldate", "subtype"),
   var.transformations = c(as.character, as.Date, as.factor))
 phy <- ape::read.tree(test_path("test-oldseq.fasta.treefile"))
 phy <- import.tree(phy, seq.info = seq.info)
@@ -43,3 +43,7 @@ test_that("assign.sstrees works", {
   expect_equal(result$Node, expected)
 })
 
+test_that("step.cluster works", {
+  result <- step.cluster(phy, branch.thresh=0.04, boot.thresh=0)
+  
+})

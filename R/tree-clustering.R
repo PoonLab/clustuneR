@@ -39,15 +39,17 @@ step.cluster <- function(phy, branch.thresh=0.03, boot.thresh=0, setID=0) {
     list(get(nm))
   }), by = Cluster]
   cluster.set <- cluster.set[order(Cluster), ]
+  names(cluster.set) <- c("Cluster", seq.cols)
   
   # collect descendants for each known case
-  des <- obj$node.info[
-    Cluster %in% cluster.set$Cluster, list(.(NodeID)), by = Cluster
-    ]
-  des <- des[order(Cluster), ]
-  cluster.set[, "Descendants" := des$V1]
-  cluster.set[, "Size" := length(V1[[1]]), by = 1:nrow(cluster.set)]
-  colnames(cluster.set) <- c("ClusterID", seq.cols, "Descendants", "Size")
+  des <- sapply(
+    split(phy$node.info$Descendants[1:Ntip(phy)], 
+          phy$node.info$Cluster[1:Ntip(phy)]), 
+    function(x) unique(unlist(x))
+    )
+  cluster.set[, "Descendants" := des]
+  
+  cluster.set$Size <- sapply(cluster.set$Descendants, length)
   cluster.set$New <- NULL
   
   # Assign growth cases to clusters, summing certainty for each
@@ -62,11 +64,11 @@ step.cluster <- function(phy, branch.thresh=0.03, boot.thresh=0, setID=0) {
     growth <- growth[V1 >= boot.thresh, Cluster[which.max(V1)], by=.(Header)]
   }
   growth <- table(growth$V1)
-  growth <- growth[which(as.numeric(names(growth)) %in% cluster.set$ClusterID)]
+  growth <- growth[which(as.numeric(names(growth)) %in% cluster.set$Cluster)]
   
   # Attach growth info and a set ID to clusters
   cluster.set[, "Growth" := 0]
-  cluster.set[ClusterID %in% as.numeric(names(growth)), 
+  cluster.set[Cluster %in% as.numeric(names(growth)), 
               "Growth":=as.numeric(growth)]
   
   cluster.set[, "BranchThresh" := branch.thresh]
