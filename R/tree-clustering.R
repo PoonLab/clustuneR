@@ -26,14 +26,15 @@ step.cluster <- function(phy, branch.thresh=0.03, boot.thresh=0, setID=0) {
   }
 
   # assign cluster memberships for all nodes in tree (not include new tips)
-  seq.cols <- colnames(phy$seq.info)
-  phy$node.info$Cluster <- path.stop["Node", ]
+  subset.trees <- assign.sstrees(phy, branch.thresh, boot.thresh)
+  phy$node.info$Cluster <- subset.trees$Node
   
   # cluster assignments for tips only (including "new" sequences)
   phy$seq.info$Cluster <- 0
   phy$seq.info$Cluster[!phy$seq.info$New] <- phy$node.info$Cluster[1:Ntip(phy)]
   
   # build a data table of known cases (i.e., not new cases)
+  seq.cols <- colnames(phy$seq.info)
   cluster.set <- phy$seq.info[!(New), lapply(seq.cols, function(nm) {
     list(get(nm))
   }), by = Cluster]
@@ -90,16 +91,15 @@ step.cluster <- function(phy, branch.thresh=0.03, boot.thresh=0, setID=0) {
 #'         the subset tree-defining root node
 assign.sstrees <- function(phy, branch.thresh, boot.thresh) {
   res <- lapply(phy$node.info$Paths, function(p) {
+    boots <- phy$node.info$Bootstrap[p]
     bl <- phy$node.info$BranchLength[p]
     cml.bl <- cumsum(bl)
+    
     ht <- which(cml.bl > branch.thresh)[1]  # height, index into other vectors
-    boots <- phy$node.info$Bootstrap[p]
+    if (is.na(ht)) ht <- length(p)  # past root of tree
     return(c(Node=p[ht], Boot=boots[ht], BranchLength=bl[ht], Height=ht))
   })
-  res <- as.data.frame(do.call(rbind, path.stop))
-  
-  # handle any paths that hit root before threshold length
-  res$Node[is.na(path.stop$Node)] <- Ntip(phy)+1  # root index
+  res <- as.data.frame(do.call(rbind, res))
   
   # Check bootstrap requirements, stepping back down clustered paths until 
   # they're met.

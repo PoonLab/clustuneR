@@ -148,27 +148,27 @@ annotate.nodes <- function(phy, max.boot=NA) {
 #' 
 #' @param phy:  ape::phylo object.  Must be annotated with seq.info, node.info,
 #'              and path.info by calling import.tree().
-#' @param full.align:  ape::DNAbin or AAbin object.  This sequence alignment 
-#'                     must contain all known sequences in the tree `phy`, as 
-#'                     well as all new sequences we want to graft to the tree
-#'                     as potential cluster growth.
+#' @param seqs:  ape::DNAbin or AAbin object.  This sequence alignment 
+#'               must contain all known sequences in the tree `phy`, as 
+#'               well as all new sequences we want to graft to the tree
+#'               as potential cluster growth.
 #' @param log.file:  character.  A path to the logfile from a tree reconstruction 
 #'                   run.  This file can be produced by IQTREE, FastTree or RAxML.
 #' @return  ape::phylo object with growth.info field
 #' @export
-extend.tree <- function (phy, full.align, log.file=NA, locus = "LOCUS") {
+extend.tree <- function (phy, seqs, log.file=NA, locus="LOCUS") {
   # Extend with growth_info
   if (is.na(log.file)) {
     stop("Ignoring growth information, path to logfile and full sequence ", 
          "alignment required.")
   }
-  if(!all(names(full.align) %in% phy$seq.info$Header)){
-    stop("Headers in full.align do not match phy$seq.info")
+  if(!all(names(seqs) %in% phy$seq.info$Header)){
+    stop("Headers in seqs do not match phy$seq.info")
   }
   
   # call pplacer to graft new sequences to the tree
   stats.json <- translate.log(log.file)
-  refpkg <- taxit.create(phy, full.align, stats.json)
+  refpkg <- taxit.create(phy, seqs, stats.json)
   ptrees  <- run.pplacer_guppy(refpkg)
   
   # process trees with new tips
