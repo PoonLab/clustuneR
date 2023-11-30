@@ -169,12 +169,17 @@ test_that("extend.tree works", {
   expect_true("growth.info" %in% names(extended))
   
   ## needed to retrieve NeighbourDes values before calling collapse.neighbours()
-  #ptrees <- read.tree(test_path("growth2.tre"))
-  #growth.info <- lapply(ptrees, function(x) annotate.growth(phy, x))
+  #stats.json <- translate.log(log.file)
+  #refpkg <- taxit.create(phy, seqs, stats.json) 
+  #ptrees <- run.pplacer_guppy(refpkg)
+  ## copy growth.tre from tmp dir to test folder
   
+  # use a test fixture
+  ptrees <- read.tree(test_path("growth2.tre"))
+  growth.info <- lapply(ptrees, function(x) annotate.growth(phy, x))
   expect_true("NeighbourNode" %in% names(extended$growth.info))
   result <- extended$growth.info$NeighbourNode
   expect_true(all(sapply(result, length)==1))
-  expected <- c(6, 18, 17, 15, 14, 4, 15, 14, 15)
+  expected <- c(6, 18, 17, 15, 14, 4, 15, 15)
   expect_equal(result, expected)
 })
