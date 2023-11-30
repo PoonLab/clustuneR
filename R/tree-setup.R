@@ -62,7 +62,7 @@ import.tree <- function(phy, seq.info=data.table(), keep_root=FALSE) {
 }
 
 
-#' Prepare nodes in tree for clustering
+#' Prepare nodes in tree for clustering (internal)
 #'
 #' Groups meta data by descendant. This also includes bootstrap certainty referenced
 #' by node labels in the ape object. Unlabeled nodes are defaulted to a bootstrap 

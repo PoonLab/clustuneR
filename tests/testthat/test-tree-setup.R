@@ -90,6 +90,8 @@ test_that("annotate.growth works", {
   seq.info <- parse.headers(
     names(seqs), var.names=c("accn", "coldate", "subtype"),
     var.transformations = c(as.character, as.Date, as.factor))
+  
+  phy <- ape::read.tree(test_path("test-oldseq.fasta.treefile"))
   phy <- import.tree(phy, seq.info = seq.info)
   
   # bypasses first part of extend.tree()
@@ -138,6 +140,8 @@ test_that("extend.tree works", {
   seq.info <- parse.headers(
     names(seqs), var.names=c("accn", "coldate", "subtype"),
     var.transformations = c(as.character, as.Date, as.factor))
+  
+  phy <- ape::read.tree(test_path("test-oldseq.fasta.treefile"))
   phy <- import.tree(phy, seq.info = seq.info)
   expect_true("node.info" %in% names(phy))
   
@@ -150,5 +154,27 @@ test_that("extend.tree works", {
   # test if tips below induced nodes (NeighbourDes) are collapsed to their MRCA
   expect_true(!is.element("NeighbourDes", names(result$growth.info)))
   
+  # we need another example to really check if neighbour collapse is working
+  seqs <- ape::read.FASTA(test_path("test2.fasta"))
+  seq.info <- parse.headers(
+    names(seqs), var.names=c("accn", "coldate", "subtype"),
+    var.transformations = c(as.character, as.Date, as.factor))
   
+  phy <- ape::read.tree(test_path("test2-old.fasta.treefile"))
+  phy <- import.tree(phy, seq.info = seq.info)
+  expect_equal(sum(phy$seq.info$New), 4)
+  
+  log.file <- test_path("test2-old.fasta.log")
+  extended <- extend.tree(phy, seqs, log.file)
+  expect_true("growth.info" %in% names(extended))
+  
+  ## needed to retrieve NeighbourDes values before calling collapse.neighbours()
+  #ptrees <- read.tree(test_path("growth2.tre"))
+  #growth.info <- lapply(ptrees, function(x) annotate.growth(phy, x))
+  
+  expect_true("NeighbourNode" %in% names(extended$growth.info))
+  result <- extended$growth.info$NeighbourNode
+  expect_true(all(sapply(result, length)==1))
+  expected <- c(6, 18, 17, 15, 14, 4, 15, 14, 15)
+  expect_equal(result, expected)
 })
