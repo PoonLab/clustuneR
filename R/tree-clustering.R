@@ -14,9 +14,13 @@
 #'                     clusters.  Lower values imply larger average cluster 
 #'                     size.
 #' @param setID:  integer, a numeric identifier for this cluster set.
+#' @param resolve:  character, if 'max', assign new case to cluster with highest
+#'                  probability; if 'random', assign at random in proportion 
+#'                  to probability of placement.
 #' @return:  A set of clusters as a data.table.
 #' @export
-step.cluster <- function(phy, branch.thresh=0.03, boot.thresh=0, setID=0) {
+step.cluster <- function(phy, branch.thresh=0.03, boot.thresh=0, setID=0, 
+                         resolve='max') {
   if (!is.numeric(branch.thresh) | !is.numeric(boot.thresh)) {
     stop("Clustering criteria must be numeric values")
   }
@@ -26,12 +30,7 @@ step.cluster <- function(phy, branch.thresh=0.03, boot.thresh=0, setID=0) {
   }
 
   # assign cluster memberships for all nodes in tree (not include new tips)
-  subset.trees <- assign.sstrees(phy, branch.thresh, boot.thresh)
-  phy$node.info$Cluster <- subset.trees$Node
-  
-  # cluster assignments for tips only (including "new" sequences)
-  phy$seq.info$Cluster <- 0
-  phy$seq.info$Cluster[!phy$seq.info$New] <- phy$node.info$Cluster[1:Ntip(phy)]
+  phy <- assign.sstrees(phy, branch.thresh, boot.thresh)
   
   # build a data table of known cases (i.e., not new cases)
   seq.cols <- colnames(phy$seq.info)
@@ -40,30 +39,33 @@ step.cluster <- function(phy, branch.thresh=0.03, boot.thresh=0, setID=0) {
   }), by = Cluster]
   cluster.set <- cluster.set[order(Cluster), ]
   names(cluster.set) <- c("Cluster", seq.cols)
+  cluster.set$New <- NULL
   
-  # collect descendants for each known case (old tip)
+  # collect descendants for each known case to calculate cluster sizes
   des <- sapply(
     split(phy$node.info$Descendants[1:Ntip(phy)], 
           phy$node.info$Cluster[1:Ntip(phy)]), 
     function(x) unique(unlist(x))
     )
   cluster.set[, "Descendants" := des]
-  
   cluster.set$Size <- sapply(cluster.set$Descendants, length)
-  cluster.set$New <- NULL
   
-  # Assign growth cases to clusters, summing certainty for each
-  phy$growth.info[, "Cluster" := phy$node.info[
-    phy$growth.info$NeighbourNode, Cluster]
-    ]
-  phy$growth.info[(TermDistance) >= branch.thresh, Cluster := NA]
-  
+  # Assign growth cases to clusters, sum over branch placements within clusters
   growth <- phy$growth.info[!is.na(Cluster), sum(Bootstrap), 
                             by=.(Header, Cluster)]
-  if (length(growth)>0){
-    growth <- growth[V1 >= boot.thresh, Cluster[which.max(V1)], by=.(Header)]
+  if (resolve=='max') {
+    growth <- growth[, Cluster[which.max(V1)], by=.(Header)]
+  } 
+  else if (resolve=='random') {
+    growth <- growth[, Cluster[sample(1:length(V1), size=1, prob=V1)], 
+                     by=.(Header)]
   }
+  else {
+    stop("Unrecognized `resolve` type", resolve, ". Expected `max` or `random`.")
+  }
+  
   growth <- table(growth$V1)
+  # FIXME: is this really necessary?
   growth <- growth[which(as.numeric(names(growth)) %in% cluster.set$Cluster)]
   
   # Attach growth info and a set ID to clusters
@@ -89,9 +91,10 @@ step.cluster <- function(phy, branch.thresh=0.03, boot.thresh=0, setID=0) {
 #' @param branch.thresh:  numeric, branch length threshold (distance from
 #'                        node to root of subset tree).
 #' @param boot.thresh:  numeric, bootstrap support threshold.
+#' @param debug: logical, use TRUE for unit testing (expose data frame)
 #' @return data frame with a row for each node in the tree, identifying 
 #'         the subset tree-defining root node
-assign.sstrees <- function(phy, branch.thresh, boot.thresh) {
+assign.sstrees <- function(phy, branch.thresh, boot.thresh, debug=FALSE) {
   res <- lapply(phy$node.info$Paths, function(p) {
     boots <- phy$node.info$Bootstrap[p]
     bl <- phy$node.info$BranchLength[p]
@@ -128,7 +131,23 @@ assign.sstrees <- function(phy, branch.thresh, boot.thresh) {
     res$BranchLength[i] <- blens[new.ht]
     res$Height[i] <- new.ht
   }
-  return(res)
+  
+  if(debug) return(res)  # for unit testing
+  
+  # transfer cluster assignments to phylo object
+  phy$node.info$Cluster <- res$Node
+  
+  # cluster assignments for tips only (including "new" sequences)
+  phy$seq.info$Cluster <- 0
+  phy$seq.info$Cluster[!phy$seq.info$New] <- phy$node.info$Cluster[1:Ntip(phy)]
+ 
+  phy$growth.info[, "Cluster" := phy$node.info[
+    phy$growth.info$NeighbourNode, Cluster]
+  ]
+  # new cases that are too far from any known case are not in clusters
+  phy$growth.info[(TermDistance) >= branch.thresh, Cluster := NA]
+  
+  return(phy)
 }
 
 
