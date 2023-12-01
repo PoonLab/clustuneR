@@ -1,15 +1,14 @@
-# prepare test fixture
-seqs <- ape::read.FASTA(test_path("test.fasta"))
-seq.info <- parse.headers(names(seqs), 
-  var.names=c("accn", "coldate", "subtype"),
-  var.transformations = c(as.character, as.Date, as.factor))
-phy <- ape::read.tree(test_path("test-oldseq.fasta.treefile"))
-phy <- import.tree(phy, seq.info = seq.info)
-log.file <- test_path("test-oldseq.fasta.log")
-phy <- extend.tree(phy, seqs, log.file)
-
-
 test_that("assign.sstrees works", {
+  # prepare test fixture
+  seqs <- ape::read.FASTA(test_path("test.fasta"))
+  seq.info <- parse.headers(names(seqs), 
+                            var.names=c("accn", "coldate", "subtype"),
+                            var.transformations = c(as.character, as.Date, as.factor))
+  phy <- ape::read.tree(test_path("test-oldseq.fasta.treefile"))
+  phy <- import.tree(phy, seq.info = seq.info)
+  log.file <- test_path("test-oldseq.fasta.log")
+  phy <- extend.tree(phy, seqs, log.file)
+  
   # bypass bootstrap threshold
   result <- assign.sstrees(phy, branch.thresh=0.04, boot.thresh=0)
   expect_true(is.data.frame(result))
@@ -44,6 +43,16 @@ test_that("assign.sstrees works", {
 })
 
 test_that("step.cluster works", {
+  # prepare test fixture
+  seqs <- ape::read.FASTA(test_path("test2.fasta"))
+  seq.info <- parse.headers(names(seqs), 
+                            var.names=c("accn", "coldate", "subtype"),
+                            var.transformations = c(as.character, as.Date, as.factor))
+  phy <- ape::read.tree(test_path("test2-old.fasta.treefile"))
+  phy <- import.tree(phy, seq.info = seq.info)
+  log.file <- test_path("test2-old.fasta.log")
+  phy <- extend.tree(phy, seqs, log.file)
+  
   result <- step.cluster(phy, branch.thresh=0.04, boot.thresh=0)
   
 })

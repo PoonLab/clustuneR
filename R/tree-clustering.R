@@ -41,7 +41,7 @@ step.cluster <- function(phy, branch.thresh=0.03, boot.thresh=0, setID=0) {
   cluster.set <- cluster.set[order(Cluster), ]
   names(cluster.set) <- c("Cluster", seq.cols)
   
-  # collect descendants for each known case
+  # collect descendants for each known case (old tip)
   des <- sapply(
     split(phy$node.info$Descendants[1:Ntip(phy)], 
           phy$node.info$Cluster[1:Ntip(phy)]), 
