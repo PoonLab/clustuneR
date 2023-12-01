@@ -4,7 +4,7 @@
 #' common ancestor. Divergence must be done through a series of short branches, 
 #' which the branch.thresh constrains.
 #'
-#' @param phy: S3 object of class "phylo". The input tree file, extended to be 
+#' @param obj: S3 object of class "phylo". The input tree file, extended to be 
 #'             annotated with vertex, edge and growth information.
 #' @param branch.thresh: numeric, the maximum branch length criterion defining 
 #'                       clusters.  A branch exceeding this value separates the 
@@ -19,7 +19,7 @@
 #'                  to probability of placement.
 #' @return:  A set of clusters as a data.table.
 #' @export
-step.cluster <- function(phy, branch.thresh=0.03, boot.thresh=0, setID=0, 
+step.cluster <- function(obj, branch.thresh=0.03, boot.thresh=0, setID=0, 
                          resolve='max') {
   if (!is.numeric(branch.thresh) | !is.numeric(boot.thresh)) {
     stop("Clustering criteria must be numeric values")
@@ -30,7 +30,7 @@ step.cluster <- function(phy, branch.thresh=0.03, boot.thresh=0, setID=0,
   }
 
   # assign cluster memberships for all nodes in tree (not include new tips)
-  phy <- assign.sstrees(phy, branch.thresh, boot.thresh)
+  phy <- assign.sstrees(obj, branch.thresh, boot.thresh)
   
   # build a data table of known cases (i.e., not new cases)
   seq.cols <- colnames(phy$seq.info)
@@ -94,6 +94,7 @@ step.cluster <- function(phy, branch.thresh=0.03, boot.thresh=0, setID=0,
 #' @param debug: logical, use TRUE for unit testing (expose data frame)
 #' @return data frame with a row for each node in the tree, identifying 
 #'         the subset tree-defining root node
+#' @export
 assign.sstrees <- function(phy, branch.thresh, boot.thresh, debug=FALSE) {
   res <- lapply(phy$node.info$Paths, function(p) {
     boots <- phy$node.info$Bootstrap[p]
