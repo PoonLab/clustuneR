@@ -1,36 +1,41 @@
-#' Makes a graph object based on sequence data and pairwise comparisons
+#' Make a graph object from an edge list and node list.
 #'
-#' Create an implementation of a graph. This is a list, consisting of a node
-#' list including metadata (seq.info) and an edge list (edge.info). 
-#' Any new sequences are resolved as growth ensuring that new sequences are 
-#' added prospectively without merging clusters. 
-#' Clusters containing purely new sequences are also ignored for this 
-#' purpose. At this point, new sequences only connect to the closest non-new 
-#' neighbour (although other options for growth resolutions may exist and be 
-#' implemented).
+#' A graph consists of a node list including sequence metadata (`seq.info`) and 
+#' an edge list (`edge.info`) of genetic distances between sequences.  
+#' clustuneR applies a distance threshold to induce a subgraph comprising one 
+#' or more connected components as 'clusters'.
 #' 
-#' @param seq.info: data.table, A set of sequence metadata. Must contain a 
-#' Header column of sequence labels.  If none given, then attempts to 
-#' extract metadata from headers in edge.info.
-#' @param edge.info: data.frame, must contain three columns (ID1, ID2, Distance). 
-#' ID1 and ID2 must match Header values in seq.info.  TN93 generates this format 
-#' by default.
+#' New sequences (identified by `which.new`) are limited to a single in-edge 
+#' from one older sequence to ensure that cluster growth does not result in 
+#' merging clusters, using the `growth.resolution` method.  Clusters comprising 
+#' only new sequences are ignored for subsequent analysis.
+#' 
+#' @param edge.info: data.frame, containing three columns (ID1, ID2, Distance). 
+#'                   ID1 and ID2 must match Header values in seq.info.  TN93 
+#'                   (https://github.com/veg/tn93) generates this format by 
+#'                   default.
+#' @param seq.info: data.table or data.frame, A node list of sequence metadata. 
+#'                  Must contain a Header column of sequence labels.
 #' @param which.new: numeric or logical, which sequences in seq.info are "new". 
-#' If numeric, this is a list of indices.
-#' @param growth.resolution: function, The method by which growth is resolved. This ensures 
-#' new cases don't merge clusters. By default, each new sequence joins a cluster 
-#' by only it's minimum retrospective edge. 
+#'                   If numeric, this is a list of integer indices.
+#' @param growth.resolution: function, The method by which growth is resolved. 
+#'                           This ensures new cases don't merge clusters. By 
+#'                           default, each new sequence joins a cluster by only 
+#'                           its minimum retrospective edge. 
 #' @return S3 object of class clusData
-#' See graph.ex for a more detailed example with annotated data.
 #' @export
-read.edges <- function(seq.info, edge.info, which.new=numeric(0), 
+read.edges <- function(edge.info, seq.info, which.new=numeric(0), 
                          growth.resolution = minimum.retrospective.edge) {
   # Check inputs
-  if (!all(c("ID1", "ID2", "Distance") %in% names(edge.info))) {
+  if (!is.element("Header", names(seq.info)))
+    stop("seq.info must contain column `Header`.")
+  if (!all(c("ID1", "ID2", "Distance") %in% names(edge.info))) 
     stop("edge.info must contain columns `ID1`, `ID2` and `Distance`.")
-  }
-  if (!all(unique(c(edge.info$ID1, edge.info$ID2)) %in% seq.info$Header)) {
-    stop("edge.info contains ID1 or ID2 strings that are not found in seq.info$Header")
+  
+  edge.labels <- unique(c(edge.info$ID1, edge.info$ID2))
+  if (!all(edge.labels %in% seq.info$Header)) {
+    stop("edge.info contains ID1 or ID2 strings that are not found in", 
+         "seq.info$Header")
   }
 
   obj <- list()
@@ -40,26 +45,29 @@ read.edges <- function(seq.info, edge.info, which.new=numeric(0),
   obj$edge.info <- edge.info
   obj$edge.info$ID1 <- match(obj$edge.info$ID1, seq.info$Header)
   obj$edge.info$ID2 <- match(obj$edge.info$ID2, seq.info$Header)
+  
+  # exclude self-edges
+  obj$edge.info <- obj$edge.info[obj$edge.info$ID1 != obj$edge.info$ID2, ]
+  #TODO: remove duplicate edges (a-b and b-a)
 
   # add a column indicating which sequences are new
+  if ("New" %in% names(obj$seq.info))
+    warning("Warning, column `New` in seq.info is being overwritten.")
   if (is.numeric(which.new)) {
     obj$seq.info$New <- FALSE
     obj$seq.info$New[which.new] <- TRUE
   } 
   else if (is.logical(which.new)) {
-    if (length(which.new) != nrow(obj$seq.info)) {
+    if (length(which.new) != nrow(obj$seq.info))
       stop("Length mismatch between which.new and seq.info.")
-    }
     obj$seq.info$New <- which.new
   } 
   else {
     stop("Unrecognized object type ", typeof(which.new), " for which.new")
   }
-  
-  if (!any(obj$seq.info$New)) {
+
+  if (!any(obj$seq.info$New))
     stop("At least one sequence must be marked as New, detected none.")
-  }
-  class(obj) <- "clusData"
   
   # save resolved single edges between old and new cases
   resolved.edges <- obj$edge.info[growth.resolution(obj), ]
@@ -71,9 +79,13 @@ read.edges <- function(seq.info, edge.info, which.new=numeric(0),
   
   # append resolved edges
   obj$edge.info <- rbind(obj$edge.info, resolved.edges)
-  
+  class(obj) <- "clusData"
   return(obj)
 }
+
+
+#' Generate edge list from a sequence alignment.
+#' @param seqs: object of class ape::DNAbin
 
 
 #' The default growth resolution helper.
@@ -84,8 +96,6 @@ read.edges <- function(seq.info, edge.info, which.new=numeric(0),
 #' @param obj: S3 object of class clusData from create.graph
 #' @return integer, vector of row indices into g$edge.info
 minimum.retrospective.edge <- function(obj) {
-  stopifnot(class(obj) == "clusData")
-
   # Find the minimum retrospective edge of each sequence
   new.seqs <- which(obj$seq.info$New)
   old.seqs <- which(!obj$seq.info$New)

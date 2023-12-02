@@ -10,7 +10,7 @@ knitr::opts_chunk$set(echo = TRUE)
 # clustuneR
 ### Implementing clustering algorithms on genetic data and finding optimal parameters through the performance of predictive growth models.
 
-clustuneR builds clusters from inputted sequence alignments and/or phylogenetic trees, allowing users to choose between multiple cluster-building algorithms implemented in the package.
+clustuneR builds clusters from edge lists or phylogenetic trees, allowing users to choose between multiple cluster-building algorithms implemented in the package.
 These algorithms can be further augmented through the selection of parameters, such as a required similarity for cluster formation, or a required level of certainty.
 The package also takes in meta-data associated with sequences such as a known collection date or subtype/variant classification.
 These can also allow users to identify cluster-level characteristics, such as the range of collection dates or the most common subtype/variant within a cluster.
@@ -25,7 +25,7 @@ Pairing these with the effectiveness of growth models can be useful in method/pa
 
 
 
-#### Installation
+### Installation
 
 > Because clustuneR uses [pplacer](https://github.com/matsen/pplacer/) to graft new sequences onto a phylogenetic tree, it can currently only be run on Linux systems.
 
@@ -66,7 +66,63 @@ You should see something like this on your console:
 ```
 
 
-## Usage example
+## Usage
+
+
+### Graph-based clustering
+
+There are numerous data structures which we can use as a basis for clustering.
+clustuneR also contains functions to support graph-based clustering. 
+To utilize these, we start by reading in an aligment, extracting metadata and determining the year that would define the partition of new sequences.
+
+```{r}
+require(clustuneR)
+seqs <- ape::read.FASTA("data/na.fasta", type="DNA")
+
+# parse sequence headers (alternatively import from another file)
+seq.info <- parse.headers(names(seqs), sep="_", 
+  var.names=c('accession', 'coldate', 'subtype'),
+  var.transformations=c(as.character, as.Date, as.factor)
+)
+
+# determine newest year for growth
+max.year <- max(year(seq.info$coldate))
+which.new <- which(year(seq.info$coldate) == max.year)
+```
+
+Once we have a set of sequences read into R and we've determined which of them 
+are "new", we can calculate the pairwise distances between them and use this as 
+the basis for a graph. 
+In this graph, vertices represent sequences and edges are 
+weighted based on genetic distance beetween them. 
+Clusters can be defined as the 
+connected components remaining after edges over a genetic distance threshold are 
+removed. 
+Much like the method described above, we can obtain a range of cluster
+sets based corresponding to a range of genetic distance thresholds, at which point 
+the same poisson regression analysis can be preformed. 
+
+``` r
+# load genetic distances (run `tn93 -t 0.04 -o na.tn93.csv na.fasta`)
+edge.info <- read.csv("data/na.tn93.csv")
+
+obj <- create.graph(seq.info, edge.info, which.new)
+
+# generate cluster sets under varying parameter settings
+param.list <- lapply(seq(0.001, 0.04, 0.001), function(x) {list(dist.thresh=x)})
+cluster.sets <- multi.cluster(obj, param.list, component.cluster) 
+
+res <- fit.analysis(cluster.sets, predictive.models=p.models, 
+                    predictor.transformations=p.trans)
+AICs <- get.AIC(res)
+delta.AIC <- AICs$TimeModelAIC - AICs$NullModelAIC
+
+cutoffs <- sapply(param.list, function(x) x$dist.thresh)
+par(mar=c(5,5,1,1))
+plot(cutoffs, delta.AIC, type='l', col='cadetblue', lwd=2)
+abline(h=0, lty=2)
+```
+
 
 ### Building a tree
 
@@ -114,7 +170,7 @@ phy.extend <- extend.tree(phy, seq.info, seqs, mc.cores=4, log.file="data/na.log
 Next, we want to configure `clustuneR` to fit two Poisson regression models to the distribution of new cases among clusters, for a range of genetic distance thresholds:
 ```{r}
 # generate cluster sets under varying parameter settings
-param.list <- lapply(seq(0.001, 0.04, 0.001), function(x) list(t=phy.extend, branch.thresh=x, boot.thresh=0.95))
+param.list <- lapply(seq(0.001, 0.04, 0.001), function(x) list(branch.thresh=x, boot.thresh=0.95))
 cluster.sets <- multi.cluster(step.cluster, param.list) 
 
 # configure Poisson regression models
@@ -153,56 +209,6 @@ If every known infection is merged into a single giant cluster, then there is no
 If every infection each becomes a cluster of one, then there will be excessive information loss due to random variation in sampling dates.
 At the threshold that minimizes `delta.AIC`, the known infections are partitioned into clusters in such a way that minimizes the information loss associated with incorporating sample dates into the predictive model.
 
-### Alternative graph based clustering
-
-There are numerous data structures which we can use as a basis for clustering.
-clustuneR also contains functions to support Graph-based clustering. To utilize 
-these, we start by reading in an aligment, extracting metadata and determining 
-the year that would define the partition of new sequences.
-
-``` r
-require(clustuneR)
-seqs <- ape::read.FASTA("data/na.fasta", type="DNA")
-
-# parse sequence headers (alternatively import from another file)
-seq.info <- parse.headers(names(seqs), sep="_", 
-  var.names=c('accession', 'coldate', 'subtype'),
-  var.transformations=c(as.character, as.Date, as.factor)
-)
-
-# determine newest year for growth
-max.year <- max(year(seq.info$coldate))
-which.new <- which(year(seq.info$coldate) == max.year)
-```
-Once we have a set of sequences read into R and we've determined which of them 
-are "new", we can calculate the pairwise distances between them and use this as 
-the basis for a graph. In this graph, vertices represent sequences and edges are 
-weighted based on genetic distance beetween them. Clusters can be defined as the 
-connected components remaining after edges over a genetic distance threshold are 
-removed. Much like the method described above, we can obtain a range of cluster
-sets based corresponding to a range of genetic distance thresholds, at which point 
-the same poisson regression analysis can be preformed. 
-
-``` r
-# load genetic distances (run `tn93 -t 0.04 -o na.tn93.csv na.fasta`)
-edge.info <- read.csv("data/na.tn93.csv")
-
-obj <- create.graph(seq.info, edge.info, which.new)
-
-# generate cluster sets under varying parameter settings
-param.list <- lapply(seq(0.001, 0.04, 0.001), function(x) {list(dist.thresh=x)})
-cluster.sets <- multi.cluster(obj, param.list, component.cluster) 
-
-res <- fit.analysis(cluster.sets, predictive.models=p.models, 
-                    predictor.transformations=p.trans)
-AICs <- get.AIC(res)
-delta.AIC <- AICs$TimeModelAIC - AICs$NullModelAIC
-
-cutoffs <- sapply(param.list, function(x) x$dist.thresh)
-par(mar=c(5,5,1,1))
-plot(cutoffs, delta.AIC, type='l', col='cadetblue', lwd=2)
-abline(h=0, lty=2)
-```
 
 ## References
 
