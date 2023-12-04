@@ -49,6 +49,8 @@ component.cluster <- function(obj, dist.thresh=0, setID=0, time.var=NA) {
   
   # fit edge probability decay model (e.g., fit.decay="colyear")
   if (!is.na(time.var)) {
+    if (!is.element(time.var, names(obj$seq.info)))
+      stop(time.var, "is not a variable in obj$seq.info!")
     # fit binomial model to bipartite graph
     fit <- fit.decay(obj, time.var)
     
