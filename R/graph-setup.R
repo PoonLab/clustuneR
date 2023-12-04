@@ -15,14 +15,15 @@
 #'                   (https://github.com/veg/tn93) generates this format by 
 #'                   default.
 #' @param seq.info: data.table or data.frame, A node list of sequence metadata. 
-#'                  Must contain a Header column of sequence labels.
+#'                  Must contain a Header column of sequence labels.  This will
+#'                  be used to renumber nodes in the edge list!
 #' @param which.new: numeric or logical, which sequences in seq.info are "new". 
 #'                   If numeric, this is a list of integer indices.
 #' @param growth.resolution: function, The method by which growth is resolved. 
 #'                           This ensures new cases don't merge clusters. By 
 #'                           default, each new sequence joins a cluster by only 
 #'                           its minimum retrospective edge. 
-#' @return S3 object of class clusData
+#' @return S3 object of class clusData, with seq.info and edge.info attributes
 #' @export
 read.edges <- function(edge.info, seq.info, which.new=numeric(0), 
                          growth.resolution = minimum.retrospective.edge) {
@@ -85,7 +86,21 @@ read.edges <- function(edge.info, seq.info, which.new=numeric(0),
 
 
 #' Generate edge list from a sequence alignment.
-#' @param seqs: object of class ape::DNAbin
+#' @param seqs: object of class ape::DNAbin, e.g., sequence alignment from 
+#'              ape::read.FASTA.
+#' @param model: character, one of the genetic distances that can be 
+#'               calculated with ape::dist.dna, defaults to "TN93"
+#' @param max.dist: numeric, limit edges to maximum distance
+#' @export
+make.edges <- function(seqs, model="TN93", max.dist=NA) {
+  nseqs <- length(seqs)
+  mx <- ape::dist.dna(seqs, model=model, as.matrix=TRUE)
+  dists <- data.frame(
+    ID1=rep(1:9, times=9)[lower.tri(mx)],
+    ID2=rep(1:9, each=9)[lower.tri(mx)],
+    Distance=mx[lower.tri(mx)]
+  )
+}
 
 
 #' The default growth resolution helper.

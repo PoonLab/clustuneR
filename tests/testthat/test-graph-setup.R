@@ -13,6 +13,7 @@ test_that("read.edges works", {
   obj <- read.edges(edge.info, seq.info, which.new, 
                     growth.resolution=minimum.retrospective.edge)
   
+  # note, edge resolution reduces number of edges
   result <- obj$edge.info$ID1
   expect_equal(length(result), (6*5)/2 + 3)
   
