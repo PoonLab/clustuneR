@@ -80,7 +80,7 @@ read.edges <- function(edge.info, seq.info, which.new=numeric(0),
   
   # append resolved edges
   obj$edge.info <- rbind(obj$edge.info, resolved.edges)
-  class(obj) <- "clusData"
+  class(obj) <- "clusEdgeData"
   return(obj)
 }
 
@@ -94,12 +94,20 @@ read.edges <- function(edge.info, seq.info, which.new=numeric(0),
 #' @export
 make.edges <- function(seqs, model="TN93", max.dist=NA) {
   nseqs <- length(seqs)
+  
+  ## FIXME: this gives different values than TN93
   mx <- ape::dist.dna(seqs, model=model, as.matrix=TRUE)
+  
   dists <- data.frame(
     ID1=rep(1:9, times=9)[lower.tri(mx)],
     ID2=rep(1:9, each=9)[lower.tri(mx)],
     Distance=mx[lower.tri(mx)]
   )
+  if (!is.na(max.dist)) {
+    # edge filtering
+    dists <- dists[dists$Distance <= max.dist]
+  }
+  return(dists)
 }
 
 
@@ -127,7 +135,7 @@ minimum.retrospective.edge <- function(obj) {
 
 #TODO: what are some other ways of resolving growth?  random?  closest in date?
 
-print.clusData <- function(obj) {
+print.clusEdgeData <- function(obj) {
   cat("clusData S3 object (")
   cat(paste(nrow(obj$seq.info), " nodes, ", nrow(obj$edge.info), " edges)\n\n", sep=""))
   cat(paste(sum(obj$seq.info$New)), " new nodes\n\n", sep="")

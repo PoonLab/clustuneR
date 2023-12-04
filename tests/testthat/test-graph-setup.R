@@ -7,6 +7,9 @@ test_that("read.edges works", {
     var.transformations=c(as.character, as.Date, as.factor))
   seq.info$colyear <- data.table::year(seq.info$coldate)
   
+  idx <- match(unique(edge.info$ID1), seq.info$Header)
+  edge.info <- edge.info[]
+  
   which.new <- (seq.info$colyear >= 2012)
   expect_equal(sum(which.new), 3)
   
@@ -32,3 +35,23 @@ test_that("read.edges works", {
   expected <- c(2:6, 3:6, 4:6, 5:6, 6, 7:9)
   expect_equal(obj$edge.info$ID2, expected)
 })
+
+
+test_that("make.edges works", {
+  # obtain edge.info from external TN93 output
+  tn93.out <- read.csv(test_path("test.tn93.csv"))
+  seqs <- ape::read.FASTA(test_path("test.fasta"))
+  seq.info <- parse.headers(
+    names(seqs), var.names=c('accn', 'coldate', 'subtype'),
+    var.transformations=c(as.character, as.Date, as.factor))
+  seq.info$colyear <- data.table::year(seq.info$coldate)
+  which.new <- (seq.info$colyear >= 2012)
+  edge.info <- read.edges(seq.info, edge.info, which.new)$edge.info
+  expected <- edge.info[order(edge.info$ID1, edge.info$ID2),]
+  
+  # generate edge.info with internal function
+  dists <- make.edges(seqs)
+  
+  #expect_equal(result, expected)  
+})
+

@@ -24,7 +24,7 @@ step.cluster <- function(obj, branch.thresh=0.03, boot.thresh=0, setID=0,
   if (!is.numeric(branch.thresh) | !is.numeric(boot.thresh)) {
     stop("Clustering criteria must be numeric values")
   }
-  if (!("growth.info" %in% names(phy))) {
+  if (!("growth.info" %in% names(obj))) {
     stop("growth.info must be defined for input tree `phy`, did you run ",
          "extend.tree()?")
   }
