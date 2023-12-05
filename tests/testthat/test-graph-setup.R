@@ -39,14 +39,14 @@ test_that("read.edges works", {
 
 test_that("make.edges works", {
   # obtain edge.info from external TN93 output
-  tn93.out <- read.csv(test_path("test.tn93.csv"))
+  tn93 <- read.csv(test_path("test.tn93.csv"))
   seqs <- ape::read.FASTA(test_path("test.fasta"))
   seq.info <- parse.headers(
     names(seqs), var.names=c('accn', 'coldate', 'subtype'),
     var.transformations=c(as.character, as.Date, as.factor))
   seq.info$colyear <- data.table::year(seq.info$coldate)
   which.new <- (seq.info$colyear >= 2012)
-  edge.info <- read.edges(edge.info, seq.info, which.new)$edge.info
+  edge.info <- read.edges(tn93, seq.info, which.new)$edge.info
   expected <- edge.info[order(edge.info$ID1, edge.info$ID2),]
   
   # generate edge.info with internal function

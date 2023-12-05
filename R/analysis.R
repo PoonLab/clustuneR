@@ -8,6 +8,10 @@
 #' @return list
 #' @export
 multi.cluster <- function(obj, param.list, cluster.method, rangeID=0) {
+  # check that param.list has required inputs
+  args <- formals(cluster.method)
+  required <- names(args)[sapply(args, is.name)]
+  
   cluster.range <- lapply(1:length(param.list), function(i) {
     pl <- param.list[[i]]
     pl$setID <- i

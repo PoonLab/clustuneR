@@ -5,9 +5,9 @@ test_that("assign.sstrees works", {
                             var.names=c("accn", "coldate", "subtype"),
                             var.transformations = c(as.character, as.Date, as.factor))
   phy <- ape::read.tree(test_path("test-oldseq.fasta.treefile"))
-  phy <- import.tree(phy, seq.info = seq.info)
+  phy <- import.tree(phy, seq.info = seq.info, quiet=TRUE)
   log.file <- test_path("test-oldseq.fasta.log")
-  phy <- extend.tree(phy, seqs, log.file)
+  phy <- extend.tree(phy, seqs, log.file, quiet=TRUE)
   
   # bypass bootstrap threshold
   result <- assign.sstrees(phy, branch.thresh=0.04, boot.thresh=0, debug=T)
@@ -49,9 +49,9 @@ test_that("step.cluster works", {
                             var.names=c("accn", "coldate", "subtype"),
                             var.transformations = c(as.character, as.Date, as.factor))
   phy <- ape::read.tree(test_path("test2-old.fasta.treefile"))
-  phy <- import.tree(phy, seq.info = seq.info)
+  phy <- import.tree(phy, seq.info = seq.info, quiet=TRUE)
   log.file <- test_path("test2-old.fasta.log")
-  phy <- extend.tree(phy, seqs, log.file)
+  phy <- extend.tree(phy, seqs, log.file, quiet=TRUE)
   
   result <- step.cluster(phy, branch.thresh=0.02, boot.thresh=0)
   expect_true(is.data.table(result))
@@ -77,9 +77,9 @@ test_that("step.cluster works", {
                             var.names=c("accn", "coldate", "subtype"),
                             var.transformations = c(as.character, as.Date, as.factor))
   phy <- ape::read.tree(test_path("test-oldseq.fasta.treefile"))
-  phy <- import.tree(phy, seq.info = seq.info)
+  phy <- import.tree(phy, seq.info = seq.info, quiet=TRUE)
   log.file <- test_path("test-oldseq.fasta.log")
-  phy <- extend.tree(phy, seqs, log.file)
+  phy <- extend.tree(phy, seqs, log.file, quiet=TRUE)
   
   # every known case is its own cluster
   result <- step.cluster(phy, branch.thresh=0.02, boot.thresh=0)

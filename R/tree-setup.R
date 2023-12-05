@@ -12,9 +12,10 @@ require(data.table)
 #'                   labels under column label `Header`.  See parse.headers()
 #' @param keep_root:  logical, override midpoint rooting.  Valid only if input
 #'                    tree is already rooted.
+#' @param quiet:  logical, set TRUE to suppress messages
 #' @return The tree annotated with node information and seq.info
 #' @export
-import.tree <- function(phy, seq.info=data.table(), keep_root=FALSE) {
+import.tree <- function(phy, seq.info=data.table(), keep_root=FALSE, quiet=FALSE) {
   # Midpoint root for consistency and resolve multichotomies
   if (is.rooted(phy)) {
     if (!keep_root) {
@@ -26,7 +27,7 @@ import.tree <- function(phy, seq.info=data.table(), keep_root=FALSE) {
     phy <- phytools::midpoint.root(phy)  
   }
   phy <- ape::multi2di(phy)
-  cat(paste("Read in tree with", Ntip(phy), "tips\n"))
+  if (!quiet) cat(paste("Read in tree with", Ntip(phy), "tips\n"))
 
   # Check Sequence names inputs
   if (nrow(seq.info) == 0) {
@@ -52,7 +53,7 @@ import.tree <- function(phy, seq.info=data.table(), keep_root=FALSE) {
   
   # label new sequences
   seq.info$New <- !(seq.info$Header %in% phy$tip.label)
-  cat(paste("Identified", sum(seq.info$New), "new sequences\n"))
+  if (!quiet) cat(paste("Identified", sum(seq.info$New), "new sequences\n"))
   phy$seq.info <- seq.info
 
   # parse bootstrap values, find descendants, calculate patristic distances
@@ -154,9 +155,10 @@ annotate.nodes <- function(phy, max.boot=NA) {
 #'               as potential cluster growth.
 #' @param log.file:  character.  A path to the logfile from a tree reconstruction 
 #'                   run.  This file can be produced by IQTREE, FastTree or RAxML.
+#' @param quiet:  logical, pass to run.pplacer_guppy to suppress messages
 #' @return  ape::phylo object with growth.info field
 #' @export
-extend.tree <- function (phy, seqs, log.file=NA, locus="LOCUS") {
+extend.tree <- function (phy, seqs, log.file=NA, locus="LOCUS", quiet=FALSE) {
   # Extend with growth_info
   if (is.na(log.file)) {
     stop("Ignoring growth information, path to logfile and full sequence ", 
@@ -169,7 +171,7 @@ extend.tree <- function (phy, seqs, log.file=NA, locus="LOCUS") {
   # call pplacer to graft new sequences to the tree
   stats.json <- translate.log(log.file)
   refpkg <- taxit.create(phy, seqs, stats.json)
-  ptrees  <- run.pplacer_guppy(refpkg)
+  ptrees  <- run.pplacer_guppy(refpkg, quiet=quiet)
   
   # process trees with new tips
   growth.info <- lapply(ptrees, function(x) annotate.growth(phy, x))
@@ -414,7 +416,7 @@ taxit.create <- function(t, seqs.full, stats.json, locus = "LOCUS") {
 #' @return A set of trees, each containing 1 new sequence as a placement
 run.pplacer_guppy <- function(refpkg, quiet=FALSE) {
   if (!quiet) {
-    print("Running pplacer...")
+    cat("Running pplacer...\n")
   }
   pplacer <- system.file("pplacer", package="clustuneR")
   if (pplacer == "") {

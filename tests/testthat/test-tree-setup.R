@@ -7,7 +7,7 @@ test_that("import.tree works", {
   phy <- ape::read.tree(text=nwk)
   
   # call without passing seq.info
-  expect_warning(result <- import.tree(phy))
+  expect_warning(result <- import.tree(phy, quiet=TRUE))
   
   expect_true(is.rooted(result))
   expect_true(is.binary(result))
@@ -92,7 +92,7 @@ test_that("annotate.growth works", {
     var.transformations = c(as.character, as.Date, as.factor))
   
   phy <- ape::read.tree(test_path("test-oldseq.fasta.treefile"))
-  phy <- import.tree(phy, seq.info = seq.info)
+  phy <- import.tree(phy, seq.info = seq.info, quiet=TRUE)
   
   # bypasses first part of extend.tree()
   ptrees <- ape::read.tree(test_path("growth.tre"))
@@ -142,11 +142,11 @@ test_that("extend.tree works", {
     var.transformations = c(as.character, as.Date, as.factor))
   
   phy <- ape::read.tree(test_path("test-oldseq.fasta.treefile"))
-  phy <- import.tree(phy, seq.info = seq.info)
+  phy <- import.tree(phy, seq.info = seq.info, quiet=TRUE)
   expect_true("node.info" %in% names(phy))
   
   log.file <- test_path("test-oldseq.fasta.log")
-  result <- extend.tree(phy, seqs, log.file)
+  result <- extend.tree(phy, seqs, log.file, quiet=TRUE)
   expect_true("growth.info" %in% names(result))
   expect_true(is.data.table(result$growth.info))
   expect_equal(nrow(result$growth.info), 4)
@@ -161,11 +161,11 @@ test_that("extend.tree works", {
     var.transformations = c(as.character, as.Date, as.factor))
   
   phy <- ape::read.tree(test_path("test2-old.fasta.treefile"))
-  phy <- import.tree(phy, seq.info = seq.info)
+  phy <- import.tree(phy, seq.info = seq.info, quiet=TRUE)
   expect_equal(sum(phy$seq.info$New), 4)
   
   log.file <- test_path("test2-old.fasta.log")
-  extended <- extend.tree(phy, seqs, log.file)
+  extended <- extend.tree(phy, seqs, log.file, quiet=TRUE)
   expect_true("growth.info" %in% names(extended))
   
   ## needed to retrieve NeighbourDes values before calling collapse.neighbours()
