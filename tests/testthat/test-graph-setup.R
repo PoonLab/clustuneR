@@ -46,7 +46,7 @@ test_that("make.edges works", {
     var.transformations=c(as.character, as.Date, as.factor))
   seq.info$colyear <- data.table::year(seq.info$coldate)
   which.new <- (seq.info$colyear >= 2012)
-  edge.info <- read.edges(seq.info, edge.info, which.new)$edge.info
+  edge.info <- read.edges(edge.info, seq.info, which.new)$edge.info
   expected <- edge.info[order(edge.info$ID1, edge.info$ID2),]
   
   # generate edge.info with internal function
