@@ -55,3 +55,22 @@ test_that("make.edges works", {
   #expect_equal(result, expected)  
 })
 
+
+test_that("fit.decay works", {
+  # load test fixture
+  tn93 <- read.csv(test_path("test2.tn93.csv"))
+  seqs <- ape::read.FASTA(test_path("test2.fasta"))
+  seq.info <- parse.headers(
+    names(seqs), var.names=c('accn', 'coldate', 'subtype'),
+    var.transformations=c(as.character, as.Date, as.factor))
+  seq.info$colyear <- data.table::year(seq.info$coldate)
+  which.new <- (seq.info$colyear >= 2012)
+  obj <- read.edges(tn93, seq.info, which.new)
+  
+  edges <- obj$edge.info[obj$edge.info$Distance < 0.02, ]
+  times <- obj$seq.info$colyear
+  result <- fit.decay(edges, times)
+  expect_true(is.element("glm", class(result)))
+  expected <- data.frame(dt=1:4, positives=c(2,1,0,0), total=c(19,10,6,2))
+  expect_equal(result$data, expected)
+})

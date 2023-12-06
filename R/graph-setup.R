@@ -115,6 +115,7 @@ make.edges <- function(seqs, model="TN93", max.dist=NA) {
 #'
 #' Ensures that new sequences only join old clusters through the shortest 
 #' retrospective edge, i.e., an edge connecting the new node to a non-new node.
+#TODO: what are some other ways of resolving growth?  random?  closest in date?
 #'
 #' @param obj: S3 object of class clusData from create.graph
 #' @return integer, vector of row indices into g$edge.info
@@ -133,10 +134,11 @@ minimum.retrospective.edge <- function(obj) {
   return(min.retro.edges)
 }
 
-#TODO: what are some other ways of resolving growth?  random?  closest in date?
 
+#' generic S3 method for clusEdgeData class
+#' @export
 print.clusEdgeData <- function(obj) {
-  cat("clusData S3 object (")
+  cat("clusEdgeData S3 object (")
   cat(paste(nrow(obj$seq.info), " nodes, ", nrow(obj$edge.info), " edges)\n\n", sep=""))
   cat(paste(sum(obj$seq.info$New)), " new nodes\n\n", sep="")
   cat("seq.info:\n")
