@@ -15,7 +15,7 @@ require(igraph)
 #' @return data.frame, known cases annotated with cluster ID and growth
 #' @export
 #' @example examples/component.cluster_ex.R
-component.cluster <- function(obj, dist.thresh=0, setID=0, time.var=NA) {
+component.cluster <- function(obj, dist.thresh, setID=0, time.var=NA) {
   # Filter edges above the distance threshold 
   filtered.edges <- obj$edge.info[obj$edge.info$Distance <= dist.thresh, ]
   

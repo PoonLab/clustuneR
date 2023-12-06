@@ -19,7 +19,7 @@
 #'                  to probability of placement.
 #' @return:  A set of clusters as a data.table.
 #' @export
-step.cluster <- function(obj, branch.thresh=0.03, boot.thresh=0, setID=0, 
+step.cluster <- function(obj, branch.thresh, boot.thresh, setID=0, 
                          resolve='max') {
   if (!is.numeric(branch.thresh) | !is.numeric(boot.thresh)) {
     stop("Clustering criteria must be numeric values")
