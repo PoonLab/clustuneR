@@ -78,11 +78,11 @@ component.cluster <- function(obj, dist.thresh=0, setID=0, time.var=NA) {
 #' Fit binomial regression model to distribution of bipartite edges between
 #' samples at different time points, as a model of decay in edge density with
 #' time.  (internal)
-#' @param nodes:  data.table, excluding new cases
-#' @param edges:  data.frame, edges below a given distance threshold
+#' @param edges:  data.frame, edges filtered by distance threshold, with nodes
+#'                identified by integer index to time vector
+#' @param times:  numeric, vector of time values for nodes
 #' @return glm object
-fit.decay <- function(obj, time.var) {
-  times <- obj$seq.info[[time.var]]
+fit.decay <- function(edges, times) {
   time.counts <- table(times)
   if (sum(time.counts == 1) / length(time.counts) > 0.5) {
     stop("fit.decay only supports discrete time, ", time.var, 
@@ -92,31 +92,32 @@ fit.decay <- function(obj, time.var) {
   # remove new cases and associated edges
   max.time <- max(times)
   keep <- which(times < max.time)
-  nodes <- obj$seq.info[keep, ]
-  nodes$time <- times[keep]
-  edges <- filtered.edges[filtered.edges$ID1 %in% keep & 
-                            filtered.edges$ID2 %in% keep, ]
-  edges$t1 <- times[edges$ID1]
-  edges$t2 <- times[edges$ID2]
+  old.edges <- edges[edges$ID1 %in% keep & edges$ID2 %in% keep, ]
+  old.edges$t1 <- times[old.edges$ID1]
+  old.edges$t2 <- times[old.edges$ID2]
   
   # for every node, find the shortest edge from an older node
   # FIXME: this could be done once only outside this function
-  positives <- lapply(1:nrow(nodes), function(child) {
-    child.t <- nodes$time[child]
-    my.edges <- edges[(edges$ID1==child | edges$ID2==child), ]
+  positives <- lapply(keep, function(child) {
+    child.t <- times[child]
+    my.edges <- old.edges[(old.edges$ID1==child | old.edges$ID2==child), ]
     parents <- ifelse(my.edges$ID1==child, my.edges$ID2, my.edges$ID1)
-    parents.t <- nodes$time[parents]
+    parents.t <- times[parents]
     
     my.edges$dt <- child.t - parents.t
-    my.edges <- my.edges[parents.t < child.t, ]
-    my.edges$dt[which.min(my.edges$Distance)]
+    retro.edges <- my.edges[parents.t < child.t, ]
+    retro.edges$dt[which.min(retro.edges$Distance)]
   })
   positives <- unlist(positives)
-  counts <- as.data.frame(table(positives))
-  names(counts) <- c("dt", "positives")
   
-  # calculate negative counts
-  time.vals <- sort(unique(times), decreasing=TRUE)
+  # prepare data frame
+  time.vals <- sort(unique(times[keep]), decreasing=TRUE)
+  dts <- apply(expand.grid(time.vals, time.vals), 1, diff)
+  dts <- unique(dts[dts>0])
+  counts <- data.frame(dt=dts)
+  counts$positives <- as.integer(table(factor(positives, levels=dts)))
+  
+  # calculate denominators
   counts$total <- 0
   for (i in 1:(length(time.vals)-1)) {
     t2 <- time.vals[i]
@@ -126,7 +127,7 @@ fit.decay <- function(obj, time.var) {
       possible.edges <- as.integer(
         time.counts[as.character(t1)] * time.counts[as.character(t2)]
       )
-      counts$total[counts$dt == dt] <- counts$total[counts$dt == dt] + 
+      counts$total[counts$dt==dt] <- counts$total[counts$dt==dt] + 
         possible.edges
     }
   }

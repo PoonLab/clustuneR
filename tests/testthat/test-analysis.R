@@ -26,6 +26,8 @@ test_that("multi.cluster works for components", {
   expect_equal(result$Size, expected)
   expected <- c(c(0,1,0,0,1,0), c(1,0,0,1), c(1,1,0,1), c(1,1,1), c(2,1))
   expect_equal(result$Growth, expected)
+  
+  # TODO: test that this works with reduced edge list
 })
 
 
@@ -57,11 +59,15 @@ test_that("fit.analysis works", {
     "NullModel"=function(x) glm(Growth~Size, data=x, family="poisson"),
     "AltModel"=function(x) glm(Growth~Size+Predictor, data=x, family="poisson")
     )
-  result <- fit.analysis(cluster.data, predictor.transformations=ptrans,
-                         predictive.models=pmods)
+  result <- fit.analysis(cluster.data, transforms=ptrans, models=pmods)
   
   expect_equal(result$NullModel[[1]]$aic, fit0$aic)
   expect_equal(result$AltModel[[1]]$aic, fit1$aic)
   
   # scrambling predictor values among clusters should reduce dAIC
+  cluster.data$Predictor <- 
+    lapply(cluster.data$Size, function(x) sample(c(0,1), size=x, replace=T))
+  ptrans <- list("Predictor"=mean)
+  result <- fit.analysis(cluster.data, transforms=ptrans, models=pmods)
+  
 })

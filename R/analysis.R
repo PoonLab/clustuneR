@@ -32,32 +32,36 @@ multi.cluster <- function(obj, param.list, cluster.method, rangeID=0) {
 #' cluster set. Multiple models can be inputted as a named list of functions taking 
 #' in cluster data (see example)
 #'
-#' @param cluster.data: data.table, Inputted set(s) of clusters. Possibly multiple ranges
-#' The following columns are required:
-#'   Size: The number of sequences in clusters, not including new growth sequences.
-#'   Growth: The number of new sequences added to the cluster.
-#'   SetID: unique identifier for a set of clusters (obtained under given criteria)
-#'   RangeID:
-#' @param predictor.transformations: A named list of transformation functions for 
-#' each predictor variable, *e.g.*, `list("Data"==sum)`. Because clustered meta data takes 
-#' the form of a list these functions are often necessary to obtain a single, 
-#' cluster-level variable.  Typical functions include `mean` and `median`.
-#' @param predictive.models: A named list of functions, each of which applies a 
-#' model to inputted cluster data (x). By default a "NullModel" example. Where
-#' Growth is predicted only by cluster size
-#' @return list, each entry labelled with SetID (to link back to the parameter list)
-#'         Entries contain S3 objects of class "glm" or "lm".
+#' @param cluster.data:  data.table, Inputted set(s) of clusters. Possibly 
+#'                       multiple ranges.  The following columns are required:
+#'                       Size: The number of sequences in clusters, not 
+#'                             including new growth sequences.
+#'                       Growth: The number of new sequences added to the 
+#'                               cluster.
+#'                       SetID: unique identifier for a set of clusters 
+#'                              (obtained under given criteria)
+#'                       Optionally, the user may also specify RangeID to 
+#'                       uniquely identify a set of clusterings.
+#' @param transforms:  list, A named list of transformation functions for each 
+#'                     predictor variable, *e.g.*, `list("Data"==sum)`. Because 
+#'                     clustered meta data takes the form of a list these 
+#'                     functions are often necessary to obtain a single, 
+#'                     cluster-level variable.  Typical functions include 
+#'                     `mean` and `median`.
+#' @param models:  list, A named list of functions, each of which applies a 
+#'                 `glm` regression model to the cluster data.  The outcome 
+#'                 variable should be `Growth` and the `family` argument should 
+#'                 be "poisson", *e.g.*: `list("NullModel"=function(x) 
+#'                 glm(Growth~Size, data=x, family="poisson"))
+#'                 You may also use `glm.nb` from the `MASS` package to fit a 
+#'                 negative binomial regression for overdispersion.
+#' @return list, each entry labelled with SetID (to link back to the parameter 
+#'         list).  Entries contain S3 objects of class "glm" or "lm".
 #' @export
-#' @example examples/fit.analysis_ex.R
-fit.analysis <- function(cluster.data, 
-                         predictor.transformations = list(),
-                         predictive.models = list(
-                           "NullModel" = function(x){
-                             glm(Growth~Size, data=x, family="poisson")
-                            })) {
+fit.analysis <- function(cluster.data, transforms, models) {
   # Check inputs
-  predictors <- names(predictor.transformations)
-  mod.names <- names(predictive.models)
+  predictors <- names(transforms)
+  mod.names <- names(models)
   
   setIDs <- unique(cluster.data[, SetID])
   if (!all((predictors) %in% colnames(cluster.data))) {
@@ -76,14 +80,14 @@ fit.analysis <- function(cluster.data,
   if(!is.null(predictors)) {
     model.data[, (predictors) := lapply(predictors, function(x) {
       sapply(cluster.data[, get(x)], function(z) {
-        (predictor.transformations[[x]])(z)
+        (transforms[[x]])(z)
       })
     })]
   }
 
   # Obtain fit data for each cluster set
   model.fits <- lapply(setIDs, function(sid) {
-    lapply(predictive.models, function(pmod) {
+    lapply(models, function(pmod) {
       suppressWarnings(list(pmod(model.data[SetID == sid, ])))
     })  # this could be run in parallel
   })
@@ -128,7 +132,8 @@ get.AIC <- function(cluster.analysis, param.list){
     RangeID=cluster.analysis$RangeID
     )
   
-  # append parameter values by set ID
+  # append parameter values
+  # FIXME: it would be safer to actually retrieve these by SetID
   pnames <- names(param.list[[1]])
   for (pn in pnames) {
     result[[pn]] <- sapply(param.list, function(x) x[[pn]])
