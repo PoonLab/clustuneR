@@ -11,6 +11,10 @@ multi.cluster <- function(obj, param.list, cluster.method, rangeID=0) {
   # check that param.list has required inputs
   args <- formals(cluster.method)
   required <- names(args)[sapply(args, is.name)]
+  required <- required[which(required!="obj")]
+  if (!all(is.element(required, names(param.list[[1]])))) {
+    stop("param.list missing one or more required parameters")
+  }
   
   cluster.range <- lapply(1:length(param.list), function(i) {
     pl <- param.list[[i]]
