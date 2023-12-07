@@ -28,6 +28,9 @@ test_that("multi.cluster works for components", {
   expect_equal(result$Growth, expected)
   
   # TODO: test that this works with reduced edge list
+  
+  # check that function rejects incompoatible parameter list
+  expect_error(multi.cluster(obj, param.list, step.cluster))
 })
 
 
