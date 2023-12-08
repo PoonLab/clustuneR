@@ -50,10 +50,10 @@ impTN93 <- function(iFile, minNS=63){
   
   #Obtain the closest retrospective edge of every vertex beyond the oldest year
   minE <- bind_rows(lapply(1:nrow(subV), function(i){
-    v <- subV[i,]
+    v <- subV[i,]  # for each node in subV
     incE <- subset(g$e, (ID1%in%v$ID)|(ID2%in%v$ID))
-    retE <- subset(incE, (tMax==v$Time)&(tDiff>0))
-    retE[which(retE$Distance==min(retE$Distance))[[1]],]
+    retE <- subset(incE, (tMax==v$Time)&(tDiff>0))  # retrospective, bipartite edges
+    retE[which(retE$Distance==min(retE$Distance))[[1]],]  # reduce to shortest edge
   }))
   
   #Only closest retrospective edges are kept for edges from new cases. 
@@ -209,7 +209,7 @@ compAnalyze <- function(subG) {
   # f is unfiltered edge list, excluding edges to new cases and between cases from time
   tTab <- table(subG$f$tMax)  # table of sampling times of most recent node for every edge in $f
   
-  # v is node list derived from unfiltered edge list
+  # v is node list derived from unfiltered edge list (excludes singletons if input is not complete graph)
   vTab <- table(subG$v$Time)  # table of sampling times, including most recent nodes
   eTab <- sapply(as.numeric(names(vTab)), function(t){
     nrow(subset(subG$e, (t1==t|t2==t)))  # how many filtered edges associated with each sampling time?
@@ -243,9 +243,16 @@ compAnalyze <- function(subG) {
   #Obtain a model of case connection frequency to new cases as predicted by individual case age
   #Use this to weight cases by age
   mod <- glm(cbind(Positive, vTotal) ~ tDiff+oeDens, data=ageD, family='binomial')
-  subG$v$Weight <- predict(mod, type='response',
-                           data.frame(tDiff=max(subG$v$Time)-subG$v$Time, 
-                                      oeDens=as.numeric(eTab[as.character(subG$v$Time)]/vTab[as.character(subG$v$Time)])))
+  
+  # predicted probability of an edge to a new case given time difference and 
+  # mean out-degree for a node from that time point
+  subG$v$Weight <- predict(
+    mod, type='response',
+    data.frame(
+      tDiff = max(subG$v$Time)-subG$v$Time, 
+      oeDens = as.numeric(eTab[as.character(subG$v$Time)] / 
+                            vTab[as.character(subG$v$Time)])
+      ))
   # subG$v$Weight <- sapply(subG$v$ID, function(id) {as.numeric(substr(id,8,8))})
   
   #Create clusters for this subgraph and measure growth
@@ -253,8 +260,13 @@ compAnalyze <- function(subG) {
   cPred <- subset(subG$v, Time<max(Time))[,c("Weight", "Cluster")]
 
   #Create two data frames from two predictive models, one based on absolute size (NULL) and our date-informed model
-  df1 <- data.frame(Growth = as.numeric(subG$g), Pred = sapply(names(subG$c), function(x) { sum(subset(cPred, Cluster==as.numeric(x))$Weight) }))
-  df2 <- data.frame(Growth = as.numeric(subG$g), Pred = as.numeric(subG$c) * (sum(as.numeric(subG$g))/sum(as.numeric(subG$c))))
+  df1 <- data.frame(Growth = as.numeric(subG$g), 
+                    Pred = sapply(names(subG$c), function(x) { 
+                      sum(subset(cPred, Cluster==as.numeric(x))$Weight) 
+                      }))
+  df2 <- data.frame(Growth = as.numeric(subG$g), 
+                    Pred = as.numeric(subG$c) * (sum(as.numeric(subG$g)) /
+                                                   sum(as.numeric(subG$c))))
   fit1 <- glm(Growth ~ Pred, data = df1, family = "poisson")
   fit2 <- glm(Growth ~ Pred, data = df2, family = "poisson")
   

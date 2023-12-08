@@ -78,11 +78,63 @@ component.cluster <- function(obj, dist.thresh, setID=0, time.var=NA) {
 #' Fit binomial regression model to distribution of bipartite edges between
 #' samples at different time points, as a model of decay in edge density with
 #' time.  (internal)
-#' @param edges:  data.frame, edges filtered by distance threshold, with nodes
-#'                identified by integer index to time vector
-#' @param times:  numeric, vector of time values for nodes
+#' @param obj:  S3 object of class objEdgeData, returned from 
+#' @param times:  numeric, vector of time values for nodes (from seq.info)
 #' @return glm object
-fit.decay <- function(edges, times) {
+fit.decay <- function(obj, times, dist.thresh) {
+  # compute some useful quantities
+  edges <- obj$edge.info
+  edges$t1 <- times[edges$ID1]
+  edges$t2 <- times[edges$ID2]
+  edges$tMax <- pmax(edges$t1, edges$t2)
+  edges$tDiff <- abs(edges$t1 - edges$t2)
+  
+  # e-edges are filtered by distance threshold, only one in-edge per new case
+  e.edges <- edges[edges$Distance < dist.thresh, ]
+  time.counts <- table(times)
+  
+  # count edges that terminate in a given year
+  e.times <- sapply(as.numeric(names(time.counts)), function(ti) 
+    sum(e.edges$t1==ti | e.edges$t2==ti))
+  names(e.times) <- names(time.counts)
+  
+  # f-edges are not threshold-filtered and exclude edges to new cases 
+  new.cases <- which(obj$seq.info$New)
+  f.edges <- edges[!(edges$ID1 %in% new.cases) & !(edges$ID2 %in% new.cases), ]
+
+  # exclude edges between cases from the same time point
+  f.edges <- f.edges[f.edges$t1 != f.edges$t2, ]
+  
+  # for each node, limit one edge from a previous time point
+  f.edges$child <- ifelse(f.edges$tMax==f.edges$t1, f.edges$ID1, f.edges$ID2)
+  temp <- lapply(split(f.edges, f.edges$child), function(x) {
+    x[which.min(x$Distance), ]
+  })
+  f.edges <- do.call(rbind, temp)
+  
+  # for every time point T and preceding time point S, get:
+  age.data <- lapply(unique(f.edges$tMax), function(end.t) {
+    # (1) the number of nodes at time T
+    total <- time.counts[as.character(end.t)]
+    
+    #(2) the number of edges from S to T with distance below threshold
+    my.edges <- f.edges[f.edges$tMax==end.t, ]
+    biparts <- split(my.edges, my.edges$tDiff)
+    positives <- sapply(biparts, function(bp) sum(bp$Distance <= dist.thresh))
+    
+    # (3) the average number of filtered edges from a node at time S to any 
+    # subsequent time point
+    tdiff <- as.numeric(names(positives))
+    outedge.dens <- sapply(tdiff, function(td) {
+      start.t <- end.t - tdiff
+      t.key <- as.character(start.t)
+      sum(e.times[t.key] / time.counts[t.key])
+    })
+    data.frame(positives, total, outedge.dens, tdiff)
+  })
+  age.data <- do.call(rbind, age.data)
+  
+  
   time.counts <- table(times)
   if (sum(time.counts == 1) / length(time.counts) > 0.5) {
     stop("fit.decay only supports discrete time, ", time.var, 
@@ -95,6 +147,12 @@ fit.decay <- function(edges, times) {
   old.edges <- edges[edges$ID1 %in% keep & edges$ID2 %in% keep, ]
   old.edges$t1 <- times[old.edges$ID1]
   old.edges$t2 <- times[old.edges$ID2]
+  old.edges$tMax <- pmax(old.edges$t1, old.edges$t2)
+  
+  ageD <- lapply(sort(unique(times)), function(ti) {
+    
+  })
+  
   
   # for every node, find the shortest edge from an older node
   # FIXME: this could be done once only outside this function
@@ -116,21 +174,7 @@ fit.decay <- function(edges, times) {
   dts <- unique(dts[dts>0])
   counts <- data.frame(dt=dts)
   counts$positives <- as.integer(table(factor(positives, levels=dts)))
-  
-  # calculate denominators
-  counts$total <- 0
-  for (i in 1:(length(time.vals)-1)) {
-    t2 <- time.vals[i]
-    for (j in (i+1):length(time.vals)) {
-      t1 <- time.vals[j]
-      dt <- t2 - t1
-      possible.edges <- as.integer(
-        time.counts[as.character(t1)] * time.counts[as.character(t2)]
-      )
-      counts$total[counts$dt==dt] <- counts$total[counts$dt==dt] + 
-        possible.edges
-    }
-  }
+  counts$totals <- 
   
   fit <- glm(cbind(positives, total) ~ as.integer(dt), family="binomial", 
              data=counts)
