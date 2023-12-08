@@ -92,6 +92,10 @@ fit.decay <- function(obj, times, dist.thresh) {
   # e-edges are filtered by distance threshold, only one in-edge per new case
   e.edges <- edges[edges$Distance < dist.thresh, ]
   time.counts <- table(times)
+  if (sum(time.counts == 1) / length(time.counts) > 0.8) {
+    # too many unique values
+    stop("fit.decay only supports discrete time, `times` appears to be continuous")
+  }
   
   # count edges that terminate in a given year
   e.times <- sapply(as.numeric(names(time.counts)), function(ti) 
@@ -136,10 +140,7 @@ fit.decay <- function(obj, times, dist.thresh) {
   
   
   time.counts <- table(times)
-  if (sum(time.counts == 1) / length(time.counts) > 0.5) {
-    stop("fit.decay only supports discrete time, ", time.var, 
-         " appears to be continuous")
-  }
+
   
   # remove new cases and associated edges
   max.time <- max(times)
