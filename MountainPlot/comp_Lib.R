@@ -136,28 +136,34 @@ tFilt <- function(iG, keepT) {
   return(iG)
 }
 
-#Simulate the growth of clusters, showing the difference in cluster size between the newest and the penultimate time point
-#The frame of reference for clusters is the penultimate year, simulating one making forcasting decisions based on one time point and validating them with the next
+
+#' Simulate the growth of clusters, showing the difference in cluster size between 
+#' the newest and the penultimate time point
+#' The frame of reference for clusters is the penultimate year, simulating one 
+#' making forcasting decisions based on one time point and validating them with 
+#' the next
+#' @param: The inputted graph. Expecting all vertices, but some edges filtered 
+#' by distance.
+#' @return: The same cluster annotated with the actual growth and cluster 
+#' information
 simGrow <- function(iG) {
-  #@param: The inputted graph. Expecting all vertices, but some edges filtered by distance.
-  #@return: The same cluster annotated with the actual growth and cluster information
-  
   #Obtain clusters at the new time point, after removing singletons
   nG <- iG
   
   # subset of new nodes that have no edges to known cases
-  nSing <- subset(nG$v, (!ID%in%c(nG$e$ID1,nG$e$ID2) & Time==max(Time)))
+  nSing <- subset(nG$v, (!ID%in%c(nG$e$ID1, nG$e$ID2) & Time==max(Time)))
   
   # subset of new nodes that DO have edges to known cases, AND all known cases
   nG$v <- subset(nG$v, !(!ID%in%c(nG$e$ID1,nG$e$ID2) & Time==max(Time)))
   nG <- compClu(nG)  # assign nodes to connected components
   
-  #obtain clusters at an old time point
+  # obtain clusters at an old time point
   keepT <- head(as.numeric(names(table(iG$v$Time))),-1)
   oG <- compClu(tFilt(iG, keepT))
   
-  #Define growth as the difference in cluster size between new and old graphs 
-  #After clsFilter(), nG will have the same number of clusters as oG, and similar membership
+  # Define growth as the difference in cluster size between new and old graphs 
+  # After clsFilter(), nG will have the same number of clusters as oG, and 
+  # similar membership
   iG$g <- nG$c-oG$c
   iG$c <- oG$c
   
