@@ -80,7 +80,7 @@ component.cluster <- function(obj, dist.thresh, setID=0, time.var=NA) {
 #' time.  (internal)
 #' @param obj:  S3 object of class objEdgeData, returned from 
 #' @param times:  numeric, vector of time values for nodes (from seq.info)
-#' @return glm object
+#' @return  numeric, weights for every node in obj$seq.info
 fit.decay <- function(obj, times, dist.thresh) {
   # compute some useful quantities
   edges <- obj$edge.info
@@ -138,46 +138,13 @@ fit.decay <- function(obj, times, dist.thresh) {
   })
   age.data <- do.call(rbind, age.data)
   
-  
-  time.counts <- table(times)
-
-  
-  # remove new cases and associated edges
-  max.time <- max(times)
-  keep <- which(times < max.time)
-  old.edges <- edges[edges$ID1 %in% keep & edges$ID2 %in% keep, ]
-  old.edges$t1 <- times[old.edges$ID1]
-  old.edges$t2 <- times[old.edges$ID2]
-  old.edges$tMax <- pmax(old.edges$t1, old.edges$t2)
-  
-  ageD <- lapply(sort(unique(times)), function(ti) {
-    
-  })
-  
-  
-  # for every node, find the shortest edge from an older node
-  # FIXME: this could be done once only outside this function
-  positives <- lapply(keep, function(child) {
-    child.t <- times[child]
-    my.edges <- old.edges[(old.edges$ID1==child | old.edges$ID2==child), ]
-    parents <- ifelse(my.edges$ID1==child, my.edges$ID2, my.edges$ID1)
-    parents.t <- times[parents]
-    
-    my.edges$dt <- child.t - parents.t
-    retro.edges <- my.edges[parents.t < child.t, ]
-    retro.edges$dt[which.min(retro.edges$Distance)]
-  })
-  positives <- unlist(positives)
-  
-  # prepare data frame
-  time.vals <- sort(unique(times[keep]), decreasing=TRUE)
-  dts <- apply(expand.grid(time.vals, time.vals), 1, diff)
-  dts <- unique(dts[dts>0])
-  counts <- data.frame(dt=dts)
-  counts$positives <- as.integer(table(factor(positives, levels=dts)))
-  counts$totals <- 
-  
-  fit <- glm(cbind(positives, total) ~ as.integer(dt), family="binomial", 
-             data=counts)
-  return(fit)
+  fit <- glm(cbind(positives, total) ~ tdiff+outedge.dens, data=age.data, 
+             family="binomial")
+  weights <- predict(fit, type = "response", 
+                     newdata = data.frame(
+                       tdiff = max(times) - times,
+                       outedge.dens = as.numeric(e.times[as.character(times)]) /
+                         as.numeric(time.counts[as.character(times)])
+                     ))
+  return(weights)
 }
