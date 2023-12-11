@@ -21,8 +21,8 @@ impTN93 <- function(iFile, minNS=63){
   temp4 <- sapply(idf$ID2, function(x) (strsplit(x,'_')[[1]])[[2]])
   
   #Create a data frame from the imported edge list. 
-  el <- data.frame(ID1=as.character(temp1), t1=year(as.Date(temp2)), 
-                   ID2=as.character(temp3), t2=year(as.Date(temp4)), 
+  el <- data.frame(ID1=as.character(temp1), t1=as.numeric(temp2),#t1=year(as.Date(temp2)), 
+                   ID2=as.character(temp3), t2=as.numeric(temp4),#t2=year(as.Date(temp4)), 
                    Distance = as.numeric(idf$Distance), stringsAsFactors= F)
   
   #Obtain the maximum time and time difference between the head and tail of each edge
@@ -292,7 +292,7 @@ gaicRun <- function(iG, cutoffs=NA) {
   #@return: A data frame of each runs cluster information (clusterAnalyze output)
   
   #Initialize a set of cutoffs to observe (based on the genetic distance distribution)
-  if  (is.na(cutoffs)) {
+  if (all(is.na(cutoffs))) {
     steps <- head(hist(subset(iG$e, Distance<0.05)$Distance, plot=FALSE)$breaks, -5)
     cutoffs <- seq(0 , max(steps), max(steps)/50) 
   }
