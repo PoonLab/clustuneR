@@ -80,8 +80,11 @@ component.cluster <- function(obj, dist.thresh, setID=0, time.var=NA) {
 #' time.  (internal)
 #' @param obj:  S3 object of class objEdgeData, returned from 
 #' @param times:  numeric, vector of time values for nodes (from seq.info)
+#' @param adjusted:  logical, if TRUE then add model term to adjust for 
+#'                   variation in out-edge degree sizes over time.
 #' @return  numeric, weights for every node in obj$seq.info
-fit.decay <- function(obj, times, dist.thresh) {
+#' @export
+fit.decay <- function(obj, times, dist.thresh, adjusted=TRUE) {
   # compute some useful quantities
   edges <- obj$edge.info
   edges$t1 <- times[edges$ID1]

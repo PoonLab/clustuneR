@@ -1,5 +1,5 @@
 # A library of functions 
-library(dplyr,verbose = FALSE)
+library(dplyr, quietly=TRUE, verbose = FALSE)
 
 #Creates a set of data-frames representing a graph of sequences, with the edges between those sequences representing the TN93 Distance.
 #Sequences must be dated with the date separated from the id by '_'. 
