@@ -51,10 +51,10 @@ component.cluster <- function(obj, dist.thresh, setID=0, time.var=NA) {
     if (!is.element(time.var, names(obj$seq.info)))
       stop(time.var, "is not a variable in obj$seq.info!")
     # fit binomial model to bipartite graph
-    fit <- fit.decay(obj, time.var)
-    
-    # the predicted edge probability for a cluster is a function of mean node age
-    #cluster.set[, "EdgeProb" := ]
+    weights <- fit.decay(
+      obj, times=obj$seq.info[[time.var]], 
+      dist.thresh=dist.thresh, adjusted=adjusted)
+    cluster.set$Weight <- split(weights[!obj$seq.info$New], obj$seq.info$Cluster[!obj$seq.info$New])
   }
   
   # Attach growth info and set ID
@@ -133,7 +133,7 @@ fit.decay <- function(obj, times, dist.thresh, adjusted=TRUE) {
     # subsequent time point
     tdiff <- as.numeric(names(positives))
     outedge.dens <- sapply(tdiff, function(td) {
-      start.t <- end.t - tdiff
+      start.t <- end.t - td
       t.key <- as.character(start.t)
       sum(e.times[t.key] / time.counts[t.key])
     })

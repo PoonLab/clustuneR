@@ -86,16 +86,14 @@ read.edges <- function(edge.info, seq.info, which.new=numeric(0),
 
 
 #' Generate edge list from a sequence alignment.
+#' FIXME: dist.dna gives different values than TN93
 #' @param seqs: object of class ape::DNAbin, e.g., sequence alignment from 
 #'              ape::read.FASTA.
 #' @param model: character, one of the genetic distances that can be 
 #'               calculated with ape::dist.dna, defaults to "TN93"
 #' @param max.dist: numeric, limit edges to maximum distance
-#' @export
 make.edges <- function(seqs, model="TN93", max.dist=NA) {
   nseqs <- length(seqs)
-  
-  ## FIXME: this gives different values than TN93
   mx <- ape::dist.dna(seqs, model=model, as.matrix=TRUE)
   
   dists <- data.frame(
