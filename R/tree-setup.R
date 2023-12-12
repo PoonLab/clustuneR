@@ -415,17 +415,19 @@ taxit.create <- function(t, seqs.full, stats.json, locus = "LOCUS") {
 #' @param refpkg: A reference package to use as input for pplacer
 #' @return A set of trees, each containing 1 new sequence as a placement
 run.pplacer_guppy <- function(refpkg, quiet=FALSE) {
+  platform <- as.character(Sys.info()["sysname"])
   if (!quiet) {
     cat("Running pplacer...\n")
   }
-  pplacer <- system.file("pplacer", package="clustuneR")
+  pplacer <- system.file(paste("pplacer", platform, sep='.'), 
+                         package="clustuneR")
   if (pplacer == "") {
     # in case user has not installed package, but running from pkg directory
-    pplacer <- "inst/pplacer"
+    pplacer <- paste("inst/pplacer", platform, sep='.')
   }
-  guppy <- system.file("guppy", package="clustuneR")
+  guppy <- system.file(paste("guppy", platform, sep='.'), package="clustuneR")
   if (guppy == "") {
-    guppy <- "inst/guppy"
+    guppy <- paste("inst/guppy", platform, sep='.')
   }
   
   # Run pplacer to obtain placements

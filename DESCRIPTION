@@ -4,7 +4,7 @@ Version: 1.0
 Authors@R: 
     c(person("Connor", "Chato", email = "ConnorChato@gmail.com",
               role = c("aut", "cre")),
-    person("Art", "Poon", role="ths"))
+    person("Art", "Poon", role=c("aut", "ths")))
 Description: clustuneR builds clusters from inputted sequence alignments and/or 
     phylogenetic trees, allowing users to choose between multiple cluster-building 
     algorithms implememented in the package and tune clustering parameters to produce 
