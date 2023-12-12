@@ -142,10 +142,10 @@ fit.decay <- function(obj, times, dist.thresh, adjusted=TRUE) {
   age.data <- do.call(rbind, age.data)
   
   if (adjusted) {
-    fit <- glm(cbind(positives, total) ~ tdiff, data=age.data, 
+    fit <- glm(cbind(positives, total) ~ tdiff+outedge.dens, data=age.data, 
                family="binomial")  
   } else {
-    fit <- glm(cbind(positives, total) ~ tdiff + outedge.dens, data=age.data, 
+    fit <- glm(cbind(positives, total) ~ tdiff, data=age.data, 
                family="binomial")
   }
   
