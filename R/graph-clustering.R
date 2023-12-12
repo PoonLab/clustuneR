@@ -14,7 +14,6 @@ require(igraph)
 #'                   a model of edge density decay with time (optional)
 #' @return data.frame, known cases annotated with cluster ID and growth
 #' @export
-#' @example examples/component.cluster_ex.R
 component.cluster <- function(obj, dist.thresh, setID=0, time.var=NA) {
   # Filter edges above the distance threshold 
   filtered.edges <- obj$edge.info[obj$edge.info$Distance <= dist.thresh, ]
@@ -77,11 +76,15 @@ component.cluster <- function(obj, dist.thresh, setID=0, time.var=NA) {
 
 #' Fit binomial regression model to distribution of bipartite edges between
 #' samples at different time points, as a model of decay in edge density with
-#' time.  (internal)
+#' time.
+#' 
 #' @param obj:  S3 object of class objEdgeData, returned from 
 #' @param times:  numeric, vector of time values for nodes (from seq.info)
+#' @param adjusted:  logical, if TRUE then include mean out-edge density 
+#'                   as a model term to adjust for variation in sampling rates.
 #' @return  numeric, weights for every node in obj$seq.info
-fit.decay <- function(obj, times, dist.thresh) {
+#' @export
+fit.decay <- function(obj, times, dist.thresh, adjusted=TRUE) {
   # compute some useful quantities
   edges <- obj$edge.info
   edges$t1 <- times[edges$ID1]
@@ -138,13 +141,20 @@ fit.decay <- function(obj, times, dist.thresh) {
   })
   age.data <- do.call(rbind, age.data)
   
-  fit <- glm(cbind(positives, total) ~ tdiff+outedge.dens, data=age.data, 
-             family="binomial")
-  weights <- predict(fit, type = "response", 
-                     newdata = data.frame(
-                       tdiff = max(times) - times,
-                       outedge.dens = as.numeric(e.times[as.character(times)]) /
-                         as.numeric(time.counts[as.character(times)])
-                     ))
+  if (adjusted) {
+    fit <- glm(cbind(positives, total) ~ tdiff, data=age.data, 
+               family="binomial")  
+  } else {
+    fit <- glm(cbind(positives, total) ~ tdiff + outedge.dens, data=age.data, 
+               family="binomial")
+  }
+  
+  weights <- predict(
+    fit, type = "response", 
+    newdata = data.frame(
+      tdiff = max(times) - times,
+      outedge.dens = as.numeric(e.times[as.character(times)]) /
+        as.numeric(time.counts[as.character(times)])
+      ))
   return(weights)
 }
