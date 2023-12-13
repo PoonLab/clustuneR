@@ -1,7 +1,5 @@
-README
+clustuneR
 ================
-
-# clustuneR
 
 ### Optimizating genetic clustering methods on the performance of predictive growth models.
 
@@ -36,11 +34,10 @@ then running
     git clone https://github.com/PoonLab/clustuneR.git 
 
 If you do not have `git` installed, then you can download the most
-recent (developmental version) package as a ZIP archive at this link:
-<https://github.com/PoonLab/clustuneR/archive/refs/heads/master.zip>
-
-or from the Releases page:
-<https://github.com/PoonLab/clustuneR/releases>
+recent (developmental version) package as a [ZIP
+archive](https://github.com/PoonLab/clustuneR/archive/refs/heads/master.zip)
+or from the [Releases](https://github.com/PoonLab/clustuneR/releases)
+page.
 
 If you have downloaded a `.zip` or `.tar.gz` archive, you can use
 `unzip` or `tar -zvxf` on the command line, or double-click on the
