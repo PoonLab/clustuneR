@@ -17,7 +17,7 @@ require(data.table)
 #' @export
 import.tree <- function(phy, seq.info=data.table(), keep_root=FALSE, quiet=FALSE) {
   # Midpoint root for consistency and resolve multichotomies
-  if (is.rooted(phy)) {
+  if (ape::is.rooted(phy)) {
     if (!keep_root) {
       cat(paste("Re-rooting tree at midpoint. To retain original root, re-run",
                 "with keep_root=TRUE."))

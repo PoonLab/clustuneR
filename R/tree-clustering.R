@@ -31,6 +31,7 @@ step.cluster <- function(obj, branch.thresh, boot.thresh, setID=0,
 
   # assign cluster memberships for all nodes in tree (not include new tips)
   phy <- assign.sstrees(obj, branch.thresh, boot.thresh)
+  ntips <- ape::Ntip(phy)
   
   # build a data table of known cases (i.e., not new cases)
   seq.cols <- colnames(phy$seq.info)
@@ -43,8 +44,7 @@ step.cluster <- function(obj, branch.thresh, boot.thresh, setID=0,
   
   # collect descendants for each known case to calculate cluster sizes
   des <- sapply(
-    split(phy$node.info$Descendants[1:Ntip(phy)], 
-          phy$node.info$Cluster[1:Ntip(phy)]), 
+    split(phy$node.info$Descendants[1:ntips], phy$node.info$Cluster[1:ntips]), 
     function(x) unique(unlist(x))
     )
   cluster.set[, "Descendants" := des]
@@ -140,7 +140,8 @@ assign.sstrees <- function(phy, branch.thresh, boot.thresh, debug=FALSE) {
   
   # cluster assignments for tips only (including "new" sequences)
   phy$seq.info$Cluster <- 0
-  phy$seq.info$Cluster[!phy$seq.info$New] <- phy$node.info$Cluster[1:Ntip(phy)]
+  ntips <- ape::Ntip(phy)
+  phy$seq.info$Cluster[!phy$seq.info$New] <- phy$node.info$Cluster[1:ntips]
  
   phy$growth.info[, "Cluster" := phy$node.info[
     phy$growth.info$NeighbourNode, Cluster]

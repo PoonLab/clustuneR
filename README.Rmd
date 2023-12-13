@@ -110,9 +110,9 @@ Conventionally, we interpret each connected component of the graph as a cluster.
 A connected component is a group of nodes such that (1) every node can be reached from another node through a path of edges, and (1) there are no edges to nodes outside of the group.
 Varying the threshold for edges yields different sets of clusters.
 
-In the following example, we start by reading in a sequence alignment, extracting metadata from the sequence labels, and identifying a subset of new sequences:
+In the following example, we start by reading in a sequence alignment (a published set of anonymized HIV-1 sequences from Canada), extracting metadata from the sequence labels, and identifying a subset of new sequences:
 
-```{r}
+```{r message=FALSE}
 require(clustuneR)
 seqs <- ape::read.FASTA("data/na.fasta", type="DNA")
 
@@ -127,128 +127,123 @@ seq.info$colyear <- year(seq.info$coldate)
 which.new <- which(seq.info$colyear == max(seq.info$colyear))
 ```
 
-You may already have these metadata in the form of a tabular data set (*i.e.*, a CSV file), in which case you can simply load these metadata as a data frame.
+> You may already have these metadata in the form of a tabular data set (*i.e.*, a CSV file), in which case you can simply load these metadata as a data frame.
 
 Next, we need to load a list of edges, where each row specifies two node labels and a distance.
 These data can be generated from a sequence alignment using the program [TN93](https://github.com/veg/tn93).
+The resulting output file is enormous (\>34MB), so we do not include it in this package!
 
 ```{r}
 # load genetic distances (run `tn93 -t 1 -o na.tn93.csv na.fasta`)
 edge.info <- read.csv("data/na.tn93.csv")
-
 obj <- read.edges(edge.info, seq.info, which.new)
 
 # generate cluster sets under varying parameter settings
 cutoffs <- seq(0, 0.04, length.out=50)
-param.list <- lapply(1:50, function(i) {
-  list(dist.thresh=cutoffs[i], setID=i, time.var="colyear") 
+param.list <- lapply(cutoffs, function(x) { 
+  list(dist.thresh=x, time.var="colyear") 
   })
 cluster.sets <- multi.cluster(obj, param.list, component.cluster) 
+```
 
-res <- fit.analysis(cluster.sets, predictive.models=p.models, 
-                    predictor.transformations=p.trans)
-AICs <- get.AIC(res)
-delta.AIC <- AICs$TimeModelAIC - AICs$NullModelAIC
+By specifying a `time.var` argument in `param.list`, we are fitting a model to the distribution of sample collection years to predict edges between cases.
+For a more detailed explanation of this method, please refer to the vignettes.
 
-cutoffs <- sapply(param.list, function(x) x$dist.thresh)
+The last step of the analysis is to fit regression models to the distribution of new cases among clusters.
+
+```{r}
+ptrans <- list("Weight"=sum)
+pmods <- list(
+  "NullModel"=function(x) glm(Growth~Size, data=x, family="poisson"),
+  "AltModel"=function(x) glm(Growth~Weight, data=x, family="poisson")
+)
+res <- fit.analysis(cluster.sets, models=pmods, transforms=ptrans)
+gaic <- get.AIC(res, param.list)
+```
+
+Here, `gaic` is a data frame that stores the key result of our analysis - the AIC values associated with the two models under varying clustering thresholds.
+The optimal TN93 distance cutoff is identified by the greatest difference between the AICs of the alternative and null models, which we can visualize as a plot:
+
+```{r fig.width=4, fig.height=4}
 par(mar=c(5,5,1,1))
-plot(cutoffs, delta.AIC, type='l', col='cadetblue', lwd=2)
+plot(cutoffs, gaic$AltModel - gaic$NullModel, type='l', 
+     lwd=2, col='cadetblue',
+     xlab="TN93 distance cutoffs", ylab="delta-AIC")
 abline(h=0, lty=2)
 ```
 
-### Building a tree
+### Tree-based clustering
 
-We start with a multiple sequence alignment of sequences that are labelled with sample collection dates.
-An example of anonymized public domain HIV-1 sequences from a study based in northern Alberta (Canada) is provided in `data/na.fasta`.
-First, we use an R script to exclude the sequences collected in the most recent year:
+A phylogenetic tree is a hypothesis about how different populations are related by their common ancestors.
+In the context of molecular epidemiology, the ancestral nodes in a tree relating different infections can approximate transmission events in the past.
+Thus, a cluster of sequences connected by short branches in the tree may represent an outbreak.
 
-```{r message=FALSE}
-require(clustuneR)
-require(ape)
-require(lubridate)
+As above, we start the same set of anonymized HIV-1 sequences in `data/na.fasta`.
+First, we generate a new alignment excluding any sequences collected in the most recent year:
 
-setwd("~/git/clustuneR")
-seqs <- ape::read.FASTA("data/na.fasta", type="DNA")
-
-# parse sequence headers (alternatively import from another file)
-seq.info <- parse.headers(names(seqs), sep="_", var.names=c('accession', 'coldate', 'subtype'),
-var.transformations=c(as.character, as.Date, as.factor))
-
-max.year <- max(year(seq.info$coldate))
-old.seqs <- seqs[year(seq.info$coldate) < max.year]
-write.FASTA(old.seqs, file="data/na-old.fasta")
+```{r eval=FALSE}
+ape::write.FASTA(seqs[-which.new], file="data/na-old.fasta")
 ```
 
-Next, we use IQ-TREE to reconstruct a maximum likelihood tree relating the "old" sequences:
+Next, we use a maximum likelihood program such as [IQ-TREE](http://www.iqtree.org/) to reconstruct a tree relating these "old" sequences:
 
 ``` console
 iqtree -bb 1000 -m GTR -nstop 200 -s na-old.fasta
 ```
 
-Note we've specified the generalized time reversible model of nucleotide substitution to bypass the model selection stage.
-Even so, this is a time-consuming step - to speed things up, we've provided IQ-TREE output files at `data/na.nwk` and `data/na.log`.
+Note we've requested a specific model of nucleotide substitution (GTR) to bypass the model selection stage of this program.
+Even so, this is a time-consuming step - to speed things up, we've provided these IQ-TREE output files at `data/na.nwk` and `data/na.log`.
 
-### Grafting new sequences
+> **clustuneR** uses a program (`pplacer`) that can work with the outputs of IQ-TREE, [FastTree](http://www.microbesonline.org/fasttree/) and [RAxML](https://cme.h-its.org/exelixis/web/software/raxml/).
+> You'll have to specify which ML tree reconstruction program you used in the next step.
 
-Next, we import both the sequence alignment and the ML tree into R.
-We will use `clustuneR` to graft the sequences from the most recent year using the program `pplacer` and the output files from IQ-TREE.
+Assuming you've kept R running, our next step is to import the ML tree into R.
+(If you quit R, you'll have to repeat the previous steps to import the alignment and parse headers.) We can then use `pplacer` to use maximum likelihood to graft the "new" sequences onto this tree.
 
-```{r warning=FALSE}
+```{r warning=FALSE, eval=FALSE}
 phy <- ape::read.tree("data/na.nwk")
-
-# use pplacer to graft new sequences onto old tree
-phy.extend <- extend.tree(phy, seq.info, seqs, mc.cores=4, log.file="data/na.log")
+phy <- import.tree(phy, seq.info)
+phy.extend <- extend.tree(phy, seqs, log.file="data/na.log")
 ```
 
-### Finding the optimal threshold
+```{r echo=FALSE}
+load("data/tree-example.RData")
+```
 
-Next, we want to configure `clustuneR` to fit two Poisson regression models to the distribution of new cases among clusters, for a range of genetic distance thresholds:
+We can reuse the `cutoffs` vector from the previous example to configure a new parameter list for generating different sets of clusters.
+In this case, we have two criteria: (1) a threshold for the total branch length from each tip to the root of a subtree, and (2) the bootstrap support for the subtree:
 
 ```{r}
-# generate cluster sets under varying parameter settings
-param.list <- lapply(seq(0.001, 0.04, 0.001), function(x) list(branch.thresh=x, boot.thresh=0.95))
-cluster.sets <- multi.cluster(step.cluster, param.list) 
+param.list <- lapply(cutoffs, function(x) list(branch.thresh=x, boot.thresh=0.95))
+cluster.sets <- multi.cluster(phy.extend, param.list, step.cluster) 
+```
 
-# configure Poisson regression models
+We also need to specify two different regression models to fit to these sets of clusters.
+Unlike our graph clustering example, we are going to simply add the mean sample collection date of sequences in each cluster as a second model term:
+
+```{r}
 p.models = list(
-    "NullModel" = function(x){
-        glm(Growth~Size, data=x, family="poisson")
-    },
-    "TimeModel" = function(x){
-        glm(Growth~Size+coldate, data=x, family="poisson")
-    }
+  "NullModel"=function(x) glm(Growth~Size, data=x, family="poisson"),
+  "TimeModel"=function(x) glm(Growth~Size+coldate, data=x, family="poisson")
 )
-p.trans = list(  # average sample collection dates across nodes in each cluster
-    "coldate" = function(x){mean(x)}
-)
-
-res <- fit.analysis(cluster.sets, predictive.models=p.models, 
-                    predictor.transformations=p.trans)
-AICs <- get.AIC(res)
-delta.AIC <- AICs$TimeModelAIC - AICs$NullModelAIC
+# average sample collection dates across nodes in each cluster
+p.trans = list("coldate"=mean)
+res <- fit.analysis(cluster.sets, models=p.models, transforms=p.trans)
+gaic <- get.AIC(res, param.list)
 ```
 
-We can visualize the difference in AICs between models as a function of the distance threshold:
+Finally, we can plot the difference in AIC between the models to select an optimal branch threshold:
 
-```{r}
-cutoffs <- sapply(param.list, function(x) x$branch.thresh)
+```{r fig.width=4, fig.height=4}
 par(mar=c(5,5,1,1))
-plot(cutoffs, delta.AIC, type='l', col='cadetblue', lwd=2)
+plot(cutoffs, gaic$TimeModel - gaic$NullModel, type='l', 
+     lwd=2, col='cadetblue', xlab="Branch threshold", ylab="delta-AIC")
 abline(h=0, lty=2)
 ```
 
-### Explanation
-
-The optimal distance threshold is associated with the lowest value of `delta.AIC`.
-We expect that adding information on sample collection dates should improve our ability to predict where the next infections will occur.
-However, this improvement will depend on how we have partitioned the database of known infections into clusters.
-If every known infection is merged into a single giant cluster, then there is no meaningful way to predict where new cases will occur, since there is no variation for a sample of one cluster.
-If every infection each becomes a cluster of one, then there will be excessive information loss due to random variation in sampling dates.
-At the threshold that minimizes `delta.AIC`, the known infections are partitioned into clusters in such a way that minimizes the information loss associated with incorporating sample dates into the predictive model.
-
 ## References
 
-If you use `clustuneR` for your work, please cite one of the following references:
+If you use **clustuneR** for your work, please cite one of the following references:
 
 -   Chato C, Kalish ML, Poon AF. Public health in genetic spaces: a statistical framework to optimize cluster-based outbreak detection.
     Virus evolution.
@@ -262,13 +257,6 @@ This package includes the binaries for pplacer and guppy (<https://matsen.fhcrc.
 
 -   Matsen FA, Kodner RB, Armbrust EV. pplacer: linear time maximum-likelihood and Bayesian phylogenetic placement of sequences onto a fixed reference tree. BMC bioinformatics. 2010 Dec;11(1):1-6.
 
-As an example, this package includes a subset of a larger published HIV-1 *pol* sequence data set.
-These sequences were originally published in a study by Vrancken *et al.* (2017) and publicly accessible in the GenBank database under the PopSet accession `1033910942`.
+This package includes some anonymized HIV-1 sequences that were placed in the public domain in association with the following publication:
 
--   Benson DA, Karsch-Mizrachi I, Lipman DJ, Ostell J, Rapp BA, Wheeler DL. GenBank.
-    Nucleic acids research.
-    2000 Jan 1;28(1):15-8.
-
--   Vrancken B, Adachi D, Benedet M, Singh A, Read R, Shafran S, Taylor GD, Simmonds K, Sikora C, Lemey P, Charlton CL. The multi-faceted dynamics of HIV-1 transmission in Northern Alberta: A combined analysis of virus genetic and public health data.
-    Infection, Genetics and Evolution.
-    2017 Aug 1;52:100-5.
+-   Vrancken B, Adachi D, Benedet M, Singh A, Read R, Shafran S, Taylor GD, Simmonds K, Sikora C, Lemey P, Charlton CL. The multi-faceted dynamics of HIV-1 transmission in Northern Alberta: A combined analysis of virus genetic and public health data. Infection, Genetics and Evolution. 2017 Aug 1;52:100-5.

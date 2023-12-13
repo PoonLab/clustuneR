@@ -12,24 +12,26 @@ require(igraph)
 #' @param setID: A numeric identifier for this cluster set.
 #' @param time.var:  character, column name for discrete time variable to fit 
 #'                   a model of edge density decay with time (optional)
+#' @param adjusted:  logical, passed to fit.decay(), only used with time.var
 #' @return data.frame, known cases annotated with cluster ID and growth
 #' @export
-component.cluster <- function(obj, dist.thresh, setID=0, time.var=NA) {
+component.cluster <- function(obj, dist.thresh, setID=0, time.var=NA, 
+                              adjusted=TRUE) {
   # Filter edges above the distance threshold 
   filtered.edges <- obj$edge.info[obj$edge.info$Distance <= dist.thresh, ]
   
   # unconnected vertices will be induced by maximum numeric vertex ID of edgelist
-  g <- graph_from_edgelist(as.matrix(filtered.edges[c("ID1", "ID2")]), 
+  g <- igraph::graph_from_edgelist(as.matrix(filtered.edges[c("ID1", "ID2")]), 
                            directed=FALSE)
   
   # append vertices with numeric IDs above maximum ID in edgelist
-  if (length(V(g)) < nrow(obj$seq.info)) {
-    orphans <- seq(max(V(g))+1, nrow(obj$seq.info))
-    g <- add_vertices(g, length(orphans))  
+  if (length(igraph::V(g)) < nrow(obj$seq.info)) {
+    orphans <- seq(max(igraph::V(g))+1, nrow(obj$seq.info))
+    g <- igraph::add_vertices(g, length(orphans))  
   }
   
   # extract connected components from graph
-  comps <- components(g)
+  comps <- igraph::components(g)
   
   # label sequences with cluster indices
   obj$seq.info$Cluster <- comps$membership
@@ -46,15 +48,15 @@ component.cluster <- function(obj, dist.thresh, setID=0, time.var=NA) {
   cluster.set$New <- NULL  # should be all FALSE
   cluster.set <- cluster.set[order(ClusterID),]
   
-  # fit edge probability decay model (e.g., fit.decay="colyear")
+  # fit edge probability decay model
   if (!is.na(time.var)) {
     if (!is.element(time.var, names(obj$seq.info)))
       stop(time.var, "is not a variable in obj$seq.info!")
     # fit binomial model to bipartite graph
-    weights <- fit.decay(
-      obj, times=obj$seq.info[[time.var]], 
+    weights <- fit.decay(obj, times=obj$seq.info[[time.var]],
       dist.thresh=dist.thresh, adjusted=adjusted)
-    cluster.set$Weight <- split(weights[!obj$seq.info$New], obj$seq.info$Cluster[!obj$seq.info$New])
+    cluster.set$Weight <- split(weights[!obj$seq.info$New], 
+                                obj$seq.info$Cluster[!obj$seq.info$New])
   }
   
   # Attach growth info and set ID
