@@ -1,7 +1,7 @@
 clustuneR
 ================
 
-### Optimizating genetic clustering methods on the performance of predictive growth models.
+### Optimizing genetic clustering methods on the performance of predictive growth models.
 
 A genetic cluster is a grouping of sequences that are markedly more
 similar to each other than to other sequences in the data set. Genetic
